@@ -11,3 +11,10 @@ all:
           ansible_connection: netconf
           ansible_ssh_common_args: '-o PreferredAuthentications=password'
           ansible_port: 22
+        10.83.6.222:
+          ansible_user: root
+          ansible_password: fasetup123
+          ansible_network_os: junipernetworks.junos.junos
+          ansible_connection: netconf
+          ansible_ssh_common_args: '-o PreferredAuthentications=password'
+          ansible_port: 22        
