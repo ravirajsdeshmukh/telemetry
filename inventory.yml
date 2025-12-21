@@ -1,0 +1,13 @@
+---
+all:
+  # ansible_python_interpreter: /usr/bin/python3
+  children:
+    junos_devices:
+      hosts:
+        10.209.3.39:
+          ansible_user: root
+          ansible_password: Embe1mpls
+          ansible_network_os: junipernetworks.junos.junos
+          ansible_connection: netconf
+          ansible_ssh_common_args: '-o PreferredAuthentications=password'
+          ansible_port: 22

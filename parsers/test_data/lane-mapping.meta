@@ -1,0 +1,7 @@
+physical-interface/name:if_name
+physical-interface/optics-diagnostics/optics-diagnostics-lane-values/lane-index:lane
+physical-interface/optics-diagnostics/optics-diagnostics-lane-values/laser-rx-optical-power:rx_power_mw
+physical-interface/optics-diagnostics/optics-diagnostics-lane-values/laser-rx-optical-power-dbm:rx_power
+physical-interface/optics-diagnostics/optics-diagnostics-lane-values/laser-output-power:tx_power_mw
+physical-interface/optics-diagnostics/optics-diagnostics-lane-values/laser-output-power-dbm:tx_power
+physical-interface/optics-diagnostics/optics-diagnostics-lane-values/laser-bias-current:tx_bias

@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+venv312/
+*.egg-info/
+
+# Output files
+output/*.xml
+output/*.json
+test_output/*.json
+test_output/*.prom
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Docker volumes
+prometheus_data/
+grafana_data/
+
+# Ansible
+*.retry
+
+# IDE
+.vscode/
+.idea/

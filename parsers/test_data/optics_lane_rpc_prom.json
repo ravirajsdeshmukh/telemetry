@@ -1,0 +1,23 @@
+{
+  "if_name": "et-0/0/32",
+  "lane": 0,  
+  "rx_power_mw": 0.591,
+  "rx_power": -2.28,
+  "tx_power_mw": 0.585,  
+  "tx_power": -2.32,
+  "tx_bias": 6.157,
+  "origin_name": "AK22063427",
+  "timestamp": 1766296245133768,
+  "p_ts": "20251221T00",
+  "probe_id": "72c13c6c-f903-4d83-a71d-9a188593f7d9",
+  "blueprint_label": "HW-BP",
+  "device_profile": "\"Juniper_QFX5120-32C\"",
+  "origin_hostname": "5d2-qfx1-leaf2",
+  "blueprint_id": "d132dde3-759b-4b2b-a866-531b02c1ce53",
+  "origin_role": "leaf",
+  "org_id": "cdbdf659-10ef-4652-be2d-fbfcc7cfa3ab",
+  "dc_edge_id": "00000000-0000-0000-1000-0200032b6318",
+  "probe_label": "Optical Transceivers",
+  "stage_name": "Lane Stats",
+  "site_id": "114c08cb-501d-40af-9a5a-d042dc986692"
+}

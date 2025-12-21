@@ -1,0 +1,81 @@
+---
+- name: Collect Junos Telemetry and Export to Prometheus
+  hosts: junos_devices
+  connection: local
+  gather_facts: no
+  
+  vars:
+    netconf_port: 830
+    output_dir: "./output"
+    prometheus_pushgateway: "http://localhost:9091"
+    rpc_config_file: "rpc_commands.yml"
+  
+  tasks:
+    - name: Ensure output directory exists
+      file:
+        path: "{{ output_dir }}"
+        state: directory
+        mode: '0755'
+    
+    - name: Load RPC commands configuration
+      include_vars:
+        file: "{{ rpc_config_file }}"
+        name: rpc_config
+    
+    - name: Execute RPC commands on Junos device
+      junipernetworks.junos.junos_rpc:
+        rpc: "{{ item.rpc }}"
+        output: xml
+        # host: "{{ inventory_hostname }}"
+        # port: "{{ netconf_port }}"
+        # username: "{{ ansible_user }}"
+        # password: "{{ ansible_password }}"
+      register: rpc_results
+      loop: "{{ rpc_config.rpc_commands }}"
+      loop_control:
+        label: "{{ item.name }}"
+    
+    - name: Save raw RPC outputs
+      copy:
+        content: "{{ item.output[0] if item.output is sequence else item.output }}"
+        dest: "{{ output_dir }}/{{ inventory_hostname }}_{{ item.item.name }}_raw.xml"
+      loop: "{{ rpc_results.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+    
+    - name: Parse RPC outputs and convert to JSON format
+      script: >
+        parsers/{{ item.item.parser }}.py
+        --input "{{ output_dir }}/{{ inventory_hostname }}_{{ item.item.name }}_raw.xml"
+        --output "{{ output_dir }}/{{ inventory_hostname }}_{{ item.item.name }}_metrics.json"
+        --device "{{ inventory_hostname }}"
+        --format json
+      args:
+        executable: python3
+      loop: "{{ rpc_results.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      register: parse_results
+    
+    - name: Display parsing results
+      debug:
+        msg: "Parsed {{ item.item.item.name }}: {{ item.stdout_lines }}"
+      loop: "{{ parse_results.results }}"
+      loop_control:
+        label: "{{ item.item.item.name }}"
+      when: item.stdout_lines is defined
+    
+    - name: Push metrics to Prometheus Pushgateway
+      script: >
+        scripts/push_to_prometheus.py
+        --pushgateway "{{ prometheus_pushgateway }}"
+        --job "junos_telemetry"
+        --instance "{{ inventory_hostname }}"
+        --metrics-file "{{ output_dir }}/{{ inventory_hostname }}_{{ item.item.name }}_metrics.json"
+        --format json
+      args:
+        executable: python3
+      loop: "{{ rpc_results.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      when: prometheus_pushgateway is defined

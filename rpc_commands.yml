@@ -1,0 +1,25 @@
+---
+# Configuration file for RPC commands and their parsers
+# Add new RPC commands here with their corresponding parser scripts
+
+rpc_commands:
+  - name: optics_diagnostics
+    rpc: get-interface-optics-diagnostics-information
+    parser: optics_diagnostics
+    description: "Collect optical interface diagnostics (power, temperature, bias current)"
+  
+  # Example: Add more RPC commands here
+  # - name: interface_statistics
+  #   rpc: get-interface-information
+  #   parser: interface_statistics
+  #   description: "Collect interface statistics"
+  #
+  # - name: chassis_environment
+  #   rpc: get-environment-information
+  #   parser: chassis_environment
+  #   description: "Collect chassis environment information"
+  #
+  # - name: route_summary
+  #   rpc: get-route-summary-information
+  #   parser: route_summary
+  #   description: "Collect routing table summary"
