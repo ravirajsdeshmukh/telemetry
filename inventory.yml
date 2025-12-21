@@ -12,7 +12,7 @@ all:
           ansible_ssh_common_args: '-o PreferredAuthentications=password'
           ansible_port: 22
           # Optional: Device-specific interface filter (comma-separated)
-          interface_filter: "et-0/0/32"
+          # interface_filter: "et-0/0/32,et-0/0/33"
         10.83.6.222: # XAI RMAed QFX
           ansible_user: root
           ansible_password: fasetup123
@@ -21,4 +21,4 @@ all:
           ansible_ssh_common_args: '-o PreferredAuthentications=password'
           ansible_port: 22
           # Optional: Device-specific interface filter (comma-separated)
-          interface_filter: "et-0/0/24"        
+          # interface_filter: "et-0/0/48,et-0/0/49"        

@@ -3,7 +3,7 @@
     {
       "if_name": "et-0/0/32",
       "device": "10.209.3.39",
-      "timestamp": 1766319140654731,
+      "timestamp": 1766319416811121,
       "temperature_high_alarm": 90.0,
       "temperature_low_alarm": -10.0,
       "temperature_high_warn": 85.0,
@@ -33,12 +33,12 @@
       "if_name": "et-0/0/32",
       "device": "10.209.3.39",
       "lane": 0,
-      "timestamp": 1766319140654797,
-      "rx_power_mw": 0.592,
-      "rx_power": -2.27,
-      "tx_power_mw": 0.584,
+      "timestamp": 1766319416811187,
+      "rx_power_mw": 0.588,
+      "rx_power": -2.3,
+      "tx_power_mw": 0.586,
       "tx_power": -2.32,
-      "tx_bias": 6.144
+      "tx_bias": 6.156
     }
   ]
 }

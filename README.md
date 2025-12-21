@@ -89,7 +89,7 @@ ansible-playbook -i inventory.yml junos_telemetry.yml -e "output_dir=/tmp/metric
 Monitor only specific interfaces by setting the `interface_filter` variable:
 
 ```bash
-# Monitor only two specific interfaces
+# Monitor only two specific interfaces (applies to all devices)
 ansible-playbook -i inventory.yml junos_telemetry.yml \
   -e 'interface_filter="et-0/0/32,et-0/0/33"'
 
@@ -98,7 +98,41 @@ ansible-playbook -i inventory.yml junos_telemetry.yml \
   -e 'interface_filter="et-0/0/32"'
 ```
 
-You can also configure this in the playbook variables section of [junos_telemetry.yml](junos_telemetry.yml):
+**Per-Device Filtering:**
+
+For different interfaces on each device, configure `interface_filter` in [inventory.yml](inventory.yml):
+
+```yaml
+junos_devices:
+  hosts:
+    10.209.3.39:
+      ansible_user: root
+      ansible_password: yourpass
+      interface_filter: "et-0/0/32,et-0/0/33"  # Specific to this device
+    
+    10.83.6.222:
+      ansible_user: root
+      ansible_password: yourpass
+      interface_filter: "et-0/0/48"  # Different interfaces for this device
+    
+    192.168.1.1:
+      ansible_user: root
+      ansible_password: yourpass
+      # No filter set - monitors all interfaces
+```
+
+Then run without `-e` flag:
+
+```bash
+ansible-playbook -i inventory.yml junos_telemetry.yml
+```
+
+**Filter Precedence:**
+1. Device-specific filter (in inventory.yml) - Highest priority
+2. Global filter (in junos_telemetry.yml vars or `-e` flag) - Medium priority
+3. No filter - Default, monitors all interfaces
+
+You can also configure a global default in the playbook variables section of [junos_telemetry.yml](junos_telemetry.yml):
 
 ```yaml
 vars:
@@ -106,6 +140,8 @@ vars:
 ```
 
 If `interface_filter` is not set or empty, all interfaces will be monitored (default behavior).
+
+See [docs/INTERFACE_FILTERING.md](docs/INTERFACE_FILTERING.md) for detailed examples and use cases.
 
 ### With Prometheus Pushgateway
 
