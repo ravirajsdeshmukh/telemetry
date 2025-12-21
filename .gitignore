@@ -6,13 +6,19 @@ __pycache__/
 .Python
 venv/
 venv312/
+env/
 *.egg-info/
 
-# Output files
+# Output files (keep directory structure but ignore contents)
 output/*.xml
 output/*.json
 test_output/*.json
 test_output/*.prom
+
+# Keep sample/test data
+!parsers/test_data/*.xml
+!parsers/test_data/*.json
+!parsers/test_data/*.meta
 
 # Logs
 *.log
@@ -30,3 +36,9 @@ grafana_data/
 # IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Credentials (if any)
+secrets.yml
+vault_password.txt
