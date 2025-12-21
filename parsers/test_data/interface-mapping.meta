@@ -18,4 +18,5 @@ rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-rx-p
 rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-bias-current-high-alarm-threshold:tx_bias_high_alarm
 rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-bias-current-low-alarm-threshold:tx_bias_low_alarm
 rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-bias-current-high-warn-threshold:tx_bias_high_warn
-rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-bias-current-low-warn-threshold:tx_bias_low_warn
+rpc-reply/interface-information/physical-interface/optics-diagnostics/module-temperature:temperature
+rpc-reply/interface-information/physical-interface/optics-diagnostics/module-voltage:voltage

@@ -134,6 +134,26 @@ def parse_interface_metrics(phys_interface: ET.Element, device: str,
     metrics['tx_bias_low_warn'] = extract_numeric_value(
         findtext_ns(optics_diag, 'laser-bias-current-low-warn-threshold'))
     
+    # Current measured values
+    # Temperature - extract from junos:celsius attribute
+    temp_element = find_ns(optics_diag, 'module-temperature')
+    if temp_element is not None:
+        # Try to get from attribute first (most accurate)
+        temp_celsius = temp_element.get('{http://xml.juniper.net/junos/26.2I20251216150948-vchintada-1/junos}celsius')
+        if not temp_celsius:
+            # Try without full namespace
+            for attr_name in temp_element.attrib:
+                if 'celsius' in attr_name.lower():
+                    temp_celsius = temp_element.attrib[attr_name]
+                    break
+        metrics['temperature'] = extract_numeric_value(temp_celsius) if temp_celsius else None
+    else:
+        metrics['temperature'] = None
+    
+    # Voltage - extract from text content
+    metrics['voltage'] = extract_numeric_value(
+        findtext_ns(optics_diag, 'module-voltage'))
+    
     # Add additional metadata if provided
     if additional_metadata:
         metrics.update(additional_metadata)

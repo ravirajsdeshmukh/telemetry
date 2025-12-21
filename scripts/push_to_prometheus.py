@@ -15,7 +15,7 @@ def json_to_prometheus(data: dict, job: str, instance: str) -> str:
     Convert JSON metrics to Prometheus line protocol.
     
     Args:
-        data: Dictionary with 'lanes' array
+        data: Dictionary with 'interfaces' and 'lanes' arrays
         job: Job label
         instance: Instance label
     
@@ -24,30 +24,94 @@ def json_to_prometheus(data: dict, job: str, instance: str) -> str:
     """
     lines = []
     
-    # Process lane metrics
+    # Process interface-level metrics (thresholds)
+    for interface in data.get('interfaces', []):
+        if_name = interface.get('if_name', 'unknown')
+        device = interface.get('device', instance)
+        
+        # Base labels for interface metrics (no lane)
+        base_labels = f'device="{device}",interface="{if_name}"'
+        
+        # Temperature thresholds
+        if interface.get('temperature_high_alarm') is not None:
+            lines.append(f'temperature_high_alarm{{{base_labels}}} {interface["temperature_high_alarm"]}')
+        if interface.get('temperature_low_alarm') is not None:
+            lines.append(f'temperature_low_alarm{{{base_labels}}} {interface["temperature_low_alarm"]}')
+        if interface.get('temperature_high_warn') is not None:
+            lines.append(f'temperature_high_warn{{{base_labels}}} {interface["temperature_high_warn"]}')
+        if interface.get('temperature_low_warn') is not None:
+            lines.append(f'temperature_low_warn{{{base_labels}}} {interface["temperature_low_warn"]}')
+        
+        # Voltage thresholds
+        if interface.get('voltage_high_alarm') is not None:
+            lines.append(f'voltage_high_alarm{{{base_labels}}} {interface["voltage_high_alarm"]}')
+        if interface.get('voltage_low_alarm') is not None:
+            lines.append(f'voltage_low_alarm{{{base_labels}}} {interface["voltage_low_alarm"]}')
+        if interface.get('voltage_high_warn') is not None:
+            lines.append(f'voltage_high_warn{{{base_labels}}} {interface["voltage_high_warn"]}')
+        if interface.get('voltage_low_warn') is not None:
+            lines.append(f'voltage_low_warn{{{base_labels}}} {interface["voltage_low_warn"]}')
+        
+        # TX power thresholds
+        if interface.get('tx_power_high_alarm') is not None:
+            lines.append(f'tx_power_high_alarm{{{base_labels}}} {interface["tx_power_high_alarm"]}')
+        if interface.get('tx_power_low_alarm') is not None:
+            lines.append(f'tx_power_low_alarm{{{base_labels}}} {interface["tx_power_low_alarm"]}')
+        if interface.get('tx_power_high_warn') is not None:
+            lines.append(f'tx_power_high_warn{{{base_labels}}} {interface["tx_power_high_warn"]}')
+        if interface.get('tx_power_low_warn') is not None:
+            lines.append(f'tx_power_low_warn{{{base_labels}}} {interface["tx_power_low_warn"]}')
+        
+        # RX power thresholds
+        if interface.get('rx_power_high_alarm') is not None:
+            lines.append(f'rx_power_high_alarm{{{base_labels}}} {interface["rx_power_high_alarm"]}')
+        if interface.get('rx_power_low_alarm') is not None:
+            lines.append(f'rx_power_low_alarm{{{base_labels}}} {interface["rx_power_low_alarm"]}')
+        if interface.get('rx_power_high_warn') is not None:
+            lines.append(f'rx_power_high_warn{{{base_labels}}} {interface["rx_power_high_warn"]}')
+        if interface.get('rx_power_low_warn') is not None:
+            lines.append(f'rx_power_low_warn{{{base_labels}}} {interface["rx_power_low_warn"]}')
+        
+        # TX bias current thresholds
+        if interface.get('tx_bias_high_alarm') is not None:
+            lines.append(f'tx_bias_high_alarm{{{base_labels}}} {interface["tx_bias_high_alarm"]}')
+        if interface.get('tx_bias_low_alarm') is not None:
+            lines.append(f'tx_bias_low_alarm{{{base_labels}}} {interface["tx_bias_low_alarm"]}')
+        if interface.get('tx_bias_high_warn') is not None:
+            lines.append(f'tx_bias_high_warn{{{base_labels}}} {interface["tx_bias_high_warn"]}')
+        if interface.get('tx_bias_low_warn') is not None:
+            lines.append(f'tx_bias_low_warn{{{base_labels}}} {interface["tx_bias_low_warn"]}')
+        
+        # Current measured values
+        if interface.get('temperature') is not None:
+            lines.append(f'temperature{{{base_labels}}} {interface["temperature"]}')
+        if interface.get('voltage') is not None:
+            lines.append(f'voltage{{{base_labels}}} {interface["voltage"]}')
+    
+    # Process lane-level metrics (measurements)
     for lane in data.get('lanes', []):
         if_name = lane.get('if_name', 'unknown')
         lane_num = lane.get('lane', 0)
         device = lane.get('device', instance)
         
-        # Don't include job/instance in labels - they're in the URL path
+        # Base labels for lane metrics (includes lane)
         base_labels = f'device="{device}",interface="{if_name}",lane="{lane_num}"'
         
         # RX power metrics
         if lane.get('rx_power_mw') is not None:
-            lines.append(f'junos_optics_rx_power_milliwatts{{{base_labels}}} {lane["rx_power_mw"]}')
+            lines.append(f'rx_power_mw{{{base_labels}}} {lane["rx_power_mw"]}')
         if lane.get('rx_power') is not None:
-            lines.append(f'junos_optics_rx_power_dbm{{{base_labels}}} {lane["rx_power"]}')
+            lines.append(f'rx_power{{{base_labels}}} {lane["rx_power"]}')
         
         # TX power metrics
         if lane.get('tx_power_mw') is not None:
-            lines.append(f'junos_optics_tx_power_milliwatts{{{base_labels}}} {lane["tx_power_mw"]}')
+            lines.append(f'tx_power_mw{{{base_labels}}} {lane["tx_power_mw"]}')
         if lane.get('tx_power') is not None:
-            lines.append(f'junos_optics_tx_power_dbm{{{base_labels}}} {lane["tx_power"]}')
+            lines.append(f'tx_power{{{base_labels}}} {lane["tx_power"]}')
         
         # TX bias current
         if lane.get('tx_bias') is not None:
-            lines.append(f'junos_optics_tx_bias_current_milliamps{{{base_labels}}} {lane["tx_bias"]}')
+            lines.append(f'tx_bias{{{base_labels}}} {lane["tx_bias"]}')
     
     # Prometheus format requires trailing newline
     return '\n'.join(lines) + '\n'
