@@ -17,7 +17,7 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
+      - ./prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -36,7 +36,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - grafana_data:/var/lib/grafana
+      - ./grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SECURITY_ADMIN_USER=admin
@@ -50,6 +50,5 @@ networks:
   monitoring:
     driver: bridge
 
-volumes:
-  prometheus_data:
-  grafana_data:
+# Note: Volumes section removed - using local directory bind mounts instead
+# Data is now stored in ./prometheus_data and ./grafana_data

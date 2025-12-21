@@ -3,7 +3,7 @@
     {
       "if_name": "et-0/0/32",
       "device": "10.209.3.39",
-      "timestamp": 1766319416811121,
+      "timestamp": 1766320678139679,
       "temperature_high_alarm": 90.0,
       "temperature_low_alarm": -10.0,
       "temperature_high_warn": 85.0,
@@ -25,7 +25,7 @@
       "tx_bias_high_warn": 12.5,
       "tx_bias_low_warn": 5.0,
       "temperature": 34.0,
-      "voltage": 3.347
+      "voltage": 3.346
     }
   ],
   "lanes": [
@@ -33,12 +33,12 @@
       "if_name": "et-0/0/32",
       "device": "10.209.3.39",
       "lane": 0,
-      "timestamp": 1766319416811187,
-      "rx_power_mw": 0.588,
-      "rx_power": -2.3,
+      "timestamp": 1766320678139750,
+      "rx_power_mw": 0.591,
+      "rx_power": -2.27,
       "tx_power_mw": 0.586,
-      "tx_power": -2.32,
-      "tx_bias": 6.156
+      "tx_power": -2.31,
+      "tx_bias": 6.153
     }
   ]
 }
