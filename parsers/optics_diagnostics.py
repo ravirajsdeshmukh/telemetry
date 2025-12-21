@@ -226,7 +226,8 @@ def parse_lane_metrics(phys_interface: ET.Element, device: str,
 
 
 def parse_optical_diagnostics(xml_content: str, device: str,
-                              additional_metadata: Dict = None) -> Dict:
+                              additional_metadata: Dict = None,
+                              interface_filter: List[str] = None) -> Dict:
     """
     Parse optical diagnostics XML and convert to JSON format.
     
@@ -234,6 +235,7 @@ def parse_optical_diagnostics(xml_content: str, device: str,
         xml_content: XML string from RPC response
         device: Device hostname/IP
         additional_metadata: Additional metadata to include in output
+        interface_filter: Optional list of interface names to include. If None, all interfaces are processed.
     
     Returns:
         Dictionary with 'interfaces' and 'lanes' arrays
@@ -249,6 +251,12 @@ def parse_optical_diagnostics(xml_content: str, device: str,
     
     # Find all physical interfaces (namespace-agnostic)
     for phys_interface in findall_recursive_ns(root, 'physical-interface'):
+        interface_name = findtext_ns(phys_interface, 'name', 'unknown')
+        
+        # Apply interface filter if configured
+        if interface_filter is not None and interface_name not in interface_filter:
+            continue
+        
         # Parse interface-level metrics
         interface_data = parse_interface_metrics(phys_interface, device, additional_metadata)
         if interface_data:
@@ -272,6 +280,7 @@ def main():
     parser.add_argument('--output', required=True, help='Output JSON metrics file')
     parser.add_argument('--device', required=True, help='Device hostname/IP')
     parser.add_argument('--metadata', type=str, help='Additional metadata as JSON string')
+    parser.add_argument('--interfaces', type=str, help='Comma-separated list of interface names to include (e.g., "et-0/0/32,et-0/0/33"). If not specified, all interfaces are processed.')
     parser.add_argument('--format', choices=['json', 'jsonl'], default='json',
                        help='Output format: json (single JSON object) or jsonl (JSON Lines)')
     
@@ -286,6 +295,12 @@ def main():
             print(f"Error parsing metadata JSON: {e}", file=sys.stderr)
             sys.exit(1)
     
+    # Parse interface filter if provided
+    interface_filter = None
+    if args.interfaces:
+        interface_filter = [iface.strip() for iface in args.interfaces.split(',')]
+        print(f"Filtering for interfaces: {', '.join(interface_filter)}")
+    
     # Read input XML
     try:
         with open(args.input, 'r') as f:
@@ -295,7 +310,7 @@ def main():
         sys.exit(1)
     
     # Parse and convert to metrics
-    result = parse_optical_diagnostics(xml_content, args.device, additional_metadata)
+    result = parse_optical_diagnostics(xml_content, args.device, additional_metadata, interface_filter)
     
     interface_count = len(result['interfaces'])
     lane_count = len(result['lanes'])

@@ -9,6 +9,9 @@
     output_dir: "./output"
     prometheus_pushgateway: "http://localhost:9091"
     rpc_config_file: "rpc_commands.yml"
+    # Optional: Comma-separated list of interfaces to monitor (e.g., "et-0/0/32,et-0/0/33")
+    # If not set or empty, all interfaces will be monitored
+    interface_filter: ""
   
   tasks:
     - name: Ensure output directory exists
@@ -43,6 +46,10 @@
       loop_control:
         label: "{{ item.item.name }}"
     
+    - name: Determine interface filter for this device
+      set_fact:
+        device_interface_filter: "{{ hostvars[inventory_hostname].interface_filter | default(interface_filter) }}"
+    
     - name: Parse RPC outputs and convert to JSON format
       script: >
         parsers/{{ item.item.parser }}.py
@@ -50,6 +57,7 @@
         --output "{{ output_dir }}/{{ inventory_hostname }}_{{ item.item.name }}_metrics.json"
         --device "{{ inventory_hostname }}"
         --format json
+        {% if device_interface_filter %}--interfaces "{{ device_interface_filter }}"{% endif %}
       args:
         executable: python3
       loop: "{{ rpc_results.results }}"

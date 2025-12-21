@@ -84,6 +84,29 @@ ansible-playbook -i inventory.yml junos_telemetry.yml -e "prometheus_pushgateway
 ansible-playbook -i inventory.yml junos_telemetry.yml -e "output_dir=/tmp/metrics"
 ```
 
+### Filter Specific Interfaces
+
+Monitor only specific interfaces by setting the `interface_filter` variable:
+
+```bash
+# Monitor only two specific interfaces
+ansible-playbook -i inventory.yml junos_telemetry.yml \
+  -e 'interface_filter="et-0/0/32,et-0/0/33"'
+
+# Monitor single interface
+ansible-playbook -i inventory.yml junos_telemetry.yml \
+  -e 'interface_filter="et-0/0/32"'
+```
+
+You can also configure this in the playbook variables section of [junos_telemetry.yml](junos_telemetry.yml):
+
+```yaml
+vars:
+  interface_filter: "et-0/0/32,et-0/0/33"  # Comma-separated list
+```
+
+If `interface_filter` is not set or empty, all interfaces will be monitored (default behavior).
+
 ### With Prometheus Pushgateway
 
 ```bash

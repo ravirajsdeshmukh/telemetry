@@ -4,17 +4,21 @@ all:
   children:
     junos_devices:
       hosts:
-        10.209.3.39:
+        10.209.3.39: # HW Lab Sunnyvale
           ansible_user: root
           ansible_password: Embe1mpls
           ansible_network_os: junipernetworks.junos.junos
           ansible_connection: netconf
           ansible_ssh_common_args: '-o PreferredAuthentications=password'
           ansible_port: 22
-        10.83.6.222:
+          # Optional: Device-specific interface filter (comma-separated)
+          interface_filter: "et-0/0/32"
+        10.83.6.222: # XAI RMAed QFX
           ansible_user: root
           ansible_password: fasetup123
           ansible_network_os: junipernetworks.junos.junos
           ansible_connection: netconf
           ansible_ssh_common_args: '-o PreferredAuthentications=password'
-          ansible_port: 22        
+          ansible_port: 22
+          # Optional: Device-specific interface filter (comma-separated)
+          interface_filter: "et-0/0/24"        
