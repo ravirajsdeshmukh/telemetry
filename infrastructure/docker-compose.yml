@@ -17,7 +17,7 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./prometheus_data:/prometheus
+      - ./mounts/prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -36,7 +36,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./grafana_data:/var/lib/grafana
+      - ./mounts/grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SECURITY_ADMIN_USER=admin
@@ -46,13 +46,31 @@ services:
     depends_on:
       - prometheus
 
+  postgres:
+    image: postgres:15-alpine
+    container_name: semaphore-postgres
+    environment:
+      POSTGRES_USER: semaphore
+      POSTGRES_PASSWORD: semaphore
+      POSTGRES_DB: semaphore
+    volumes:
+      - ./mounts/postgres_data:/var/lib/postgresql/data
+    networks:
+      - monitoring
+    restart: unless-stopped
+
   semaphore:
     image: semaphoreui/semaphore:latest
     container_name: semaphore
     ports:
       - "3001:3000"
     environment:
-      SEMAPHORE_DB_DIALECT: bolt
+      SEMAPHORE_DB_DIALECT: postgres
+      SEMAPHORE_DB_HOST: postgres
+      SEMAPHORE_DB_PORT: 5432
+      SEMAPHORE_DB_USER: semaphore
+      SEMAPHORE_DB_PASS: semaphore
+      SEMAPHORE_DB_NAME: semaphore
       SEMAPHORE_ADMIN_PASSWORD: changeme
       SEMAPHORE_ADMIN_NAME: admin
       SEMAPHORE_ADMIN_EMAIL: admin@localhost
@@ -61,18 +79,19 @@ services:
       SEMAPHORE_LDAP_ACTIVATED: 'no'
       ANSIBLE_HOST_KEY_CHECKING: 'false'
     volumes:
-      - ./semaphore_data:/etc/semaphore
       - ../ansible:/ansible:ro
+      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
       - ../output:/output
       - /home/ubuntu/.ssh:/root/.ssh:ro
     networks:
       - monitoring
     restart: unless-stopped
-    user: "${UID:-0}:${GID:-0}"
+    depends_on:
+      - postgres
 
 networks:
   monitoring:
     driver: bridge
 
 # Note: Volumes section removed - using local directory bind mounts instead
-# Data is now stored in ./prometheus_data and ./grafana_data
+# Data is now stored in ./mounts/ directory

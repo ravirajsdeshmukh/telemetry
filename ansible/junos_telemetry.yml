@@ -6,8 +6,8 @@
   
   vars:
     netconf_port: 830
-    output_dir: "./output"
-    prometheus_pushgateway: "http://localhost:9091"
+    output_dir: "/output"
+    prometheus_pushgateway: "http://pushgateway:9091"
     rpc_config_file: "rpc_commands.yml"
     # Optional: Comma-separated list of interfaces to monitor (e.g., "et-0/0/32,et-0/0/33")
     # If not set or empty, all interfaces will be monitored
@@ -19,6 +19,8 @@
         path: "{{ output_dir }}"
         state: directory
         mode: '0755'
+      when: output_dir != "/output"
+      ignore_errors: yes
     
     - name: Load RPC commands configuration
       include_vars:
