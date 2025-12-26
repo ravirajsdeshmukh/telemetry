@@ -1,0 +1,10 @@
+{
+ 	"bolt": {
+ 		"host": "/var/lib/semaphore/database.boltdb"
+ 	},
+ 	"dialect": "bolt",
+ 	"tmp_path": "/tmp/semaphore",
+ 	"cookie_hash": "0GsRgJ+8lBCPqgV5v9f9DLZnabapgKkM3VtLlGr/g/s=",
+ 	"cookie_encryption": "WYJWIhZbjD+ImSKqKB0y3LZsPQ4nDb35phxozmYrk7I=",
+ 	"access_key_encryption": "/VsMs9FKp1l/llqzjxq++XbfFvlTlJKiRVuhYV4MKWw="
+ }
