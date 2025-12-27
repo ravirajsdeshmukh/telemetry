@@ -4,6 +4,14 @@ all:
   children:
     junos_devices:
       hosts:
+        dcf-onyx27-jun.englab.juniper.net:
+          ansible_user: root
+          ansible_password: Embe1mpls
+          ansible_network_os: junipernetworks.junos.junos
+          ansible_connection: netconf
+          ansible_ssh_common_args: '-o PreferredAuthentications=password'
+          ansible_port: 22
+          interface_filter: "xe-0/0/48:2, xe-0/0/48:3, xe-0/0/6, xe-0/0/7, xe-0/0/52:3, xe-0/0/21"      
         10.209.3.39: # HW Lab Sunnyvale
           ansible_user: root
           ansible_password: Embe1mpls
@@ -13,36 +21,37 @@ all:
           ansible_port: 22
           # Optional: Device-specific interface filter (comma-separated)
           interface_filter: "et-0/0/32"
-        10.83.6.222: # XAI RMAed QFX
-          ansible_user: root
-          ansible_password: fasetup123
-          ansible_network_os: junipernetworks.junos.junos
-          ansible_connection: netconf
-          ansible_ssh_common_args: '-o PreferredAuthentications=password'
-          ansible_port: 22
-          # Optional: Device-specific interface filter (comma-separated)
-          interface_filter: "et-0/0/62:0, et-0/0/62:1"
-        dcf-hill7-evo.englab.juniper.net: # DCs Hill7 Evo
-          ansible_user: root
-          ansible_password: Embe1mpls
-          ansible_network_os: junipernetworks.junos.junos
-          ansible_connection: netconf
-          ansible_ssh_common_args: '-o PreferredAuthentications=password'
-          ansible_port: 22
-          interface_filter: "et-0/0/0:0"
-        dcf-hill9-evo.englab.juniper.net: # DCs Hill9 Evo
-          ansible_user: root
-          ansible_password: Embe1mpls
-          ansible_network_os: junipernetworks.junos.junos
-          ansible_connection: netconf
-          ansible_ssh_common_args: '-o PreferredAuthentications=password'
-          ansible_port: 22
-          interface_filter: "et-0/0/0:0, et-0/0/0:1"
-        dcf-hill10-evo.englab.juniper.net: # DCs Hill10 Evo
-          ansible_user: root
-          ansible_password: Embe1mpls
-          ansible_network_os: junipernetworks.junos.junos
-          ansible_connection: netconf
-          ansible_ssh_common_args: '-o PreferredAuthentications=password'
-          ansible_port: 22
-          interface_filter: "et-0/0/0:1"
+        # 10.83.6.222: # XAI RMAed QFX
+        #   ansible_user: root
+        #   ansible_password: fasetup123
+        #   ansible_network_os: junipernetworks.junos.junos
+        #   ansible_connection: netconf
+        #   ansible_ssh_common_args: '-o PreferredAuthentications=password'
+        #   ansible_port: 22
+        #   # Optional: Device-specific interface filter (comma-separated)
+        #   interface_filter: "et-0/0/62:0, et-0/0/62:1"
+        # dcf-hill7-evo.englab.juniper.net: # DCs Hill7 Evo
+        #   ansible_user: root
+        #   ansible_password: Embe1mpls
+        #   ansible_network_os: junipernetworks.junos.junos
+        #   ansible_connection: netconf
+        #   ansible_ssh_common_args: '-o PreferredAuthentications=password'
+        #   ansible_port: 22
+        #   interface_filter: "et-0/0/0:0"
+        # dcf-hill9-evo.englab.juniper.net: # DCs Hill9 Evo
+        #   ansible_user: root
+        #   ansible_password: Embe1mpls
+        #   ansible_network_os: junipernetworks.junos.junos
+        #   ansible_connection: netconf
+        #   ansible_ssh_common_args: '-o PreferredAuthentications=password'
+        #   ansible_port: 22
+        #   interface_filter: "et-0/0/0:0, et-0/0/0:1"
+        # dcf-hill10-evo.englab.juniper.net: # DCs Hill10 Evo
+        #   ansible_user: root
+        #   ansible_password: Embe1mpls
+        #   ansible_network_os: junipernetworks.junos.junos
+        #   ansible_connection: netconf
+        #   ansible_ssh_common_args: '-o PreferredAuthentications=password'
+        #   ansible_port: 22
+        #   interface_filter: "et-0/0/0:1"
+

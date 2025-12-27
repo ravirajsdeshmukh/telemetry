@@ -6,7 +6,8 @@
   
   vars:
     netconf_port: 830
-    output_dir: "/output"
+    # Use /output for container, ../output for host
+    output_dir: "{{ '/output' if playbook_dir == '/ansible' else '../output' }}"
     prometheus_pushgateway: "http://pushgateway:9091"
     rpc_config_file: "rpc_commands.yml"
     # Optional: Comma-separated list of interfaces to monitor (e.g., "et-0/0/32,et-0/0/33")
@@ -15,12 +16,20 @@
   
   tasks:
     - name: Ensure output directory exists
-      file:
+      local_action:
+        module: file
         path: "{{ output_dir }}"
         state: directory
-        mode: '0755'
-      when: output_dir != "/output"
-      ignore_errors: yes
+        mode: '0777'
+      run_once: true
+      changed_when: false
+    
+    - name: Clean output directory before run
+      local_action:
+        module: shell
+        cmd: "find {{ output_dir }} -type f -delete 2>/dev/null || true"
+      run_once: true
+      changed_when: false
     
     - name: Load RPC commands configuration
       include_vars:
@@ -40,9 +49,20 @@
       loop_control:
         label: "{{ item.name }}"
     
+    - name: Debug RPC output structure
+      debug:
+        msg: 
+          - "Output type: {{ item.output | type_debug }}"
+          - "Output length: {{ item.output | length if item.output is sequence else 'N/A' }}"
+          - "Has output_lines: {{ 'output_lines' in item }}"
+      loop: "{{ rpc_results.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      when: false  # Set to true to enable debugging
+    
     - name: Save raw RPC outputs
       copy:
-        content: "{{ item.output[0] if item.output is sequence else item.output }}"
+        content: "{{ item.output | join('') if item.output is sequence else item.output }}"
         dest: "{{ output_dir }}/{{ inventory_hostname }}_{{ item.item.name }}_raw.xml"
       loop: "{{ rpc_results.results }}"
       loop_control:
