@@ -1,8 +1,8 @@
 rpc-reply/interface-information/physical-interface/name:if_name
-rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-temperature-high-alarm-threshold:temperature_high_alarm
-rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-temperature-low-alarm-threshold:temperature_low_alarm
-rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-temperature-high-warn-threshold:temperature_high_warn
-rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-temperature-low-warn-threshold:temperature_low_warn
+rpc-reply/interface-information/physical-interface/optics-diagnostics/module-temperature-high-alarm-threshold:temperature_high_alarm
+rpc-reply/interface-information/physical-interface/optics-diagnostics/module-temperature-low-alarm-threshold:temperature_low_alarm
+rpc-reply/interface-information/physical-interface/optics-diagnostics/module-temperature-high-warn-threshold:temperature_high_warn
+rpc-reply/interface-information/physical-interface/optics-diagnostics/module-temperature-low-warn-threshold:temperature_low_warn
 rpc-reply/interface-information/physical-interface/optics-diagnostics/module-voltage-high-alarm-threshold:voltage_high_alarm
 rpc-reply/interface-information/physical-interface/optics-diagnostics/module-voltage-low-alarm-threshold:voltage_low_alarm
 rpc-reply/interface-information/physical-interface/optics-diagnostics/module-voltage-high-warn-threshold:voltage_high_warn
@@ -20,3 +20,8 @@ rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-bias
 rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-bias-current-high-warn-threshold:tx_bias_high_warn
 rpc-reply/interface-information/physical-interface/optics-diagnostics/module-temperature:temperature
 rpc-reply/interface-information/physical-interface/optics-diagnostics/module-voltage:voltage
+rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-bias-current:tx_bias
+rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-output-power:tx_power_mw
+rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-output-power-dbm:tx_power
+rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-rx-optical-power:rx_power_mw
+rpc-reply/interface-information/physical-interface/optics-diagnostics/laser-rx-optical-power-dbm:rx_power

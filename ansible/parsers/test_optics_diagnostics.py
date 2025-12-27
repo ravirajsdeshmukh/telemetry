@@ -31,13 +31,21 @@ class TestOpticsDiagnosticsParser(unittest.TestCase):
         """Load test data."""
         test_data_dir = Path(__file__).parent / 'test_data'
         
-        # Load sample XML
+        # Load sample XML with lanes
         xml_file = test_data_dir / 'optics_rpc_response.xml'
         if xml_file.exists():
             with open(xml_file, 'r') as f:
                 cls.sample_xml = f.read()
         else:
             cls.sample_xml = None
+        
+        # Load sample XML without lanes (interface-level metrics)
+        xml_file2 = test_data_dir / 'optics_rpc_response2.xml'
+        if xml_file2.exists():
+            with open(xml_file2, 'r') as f:
+                cls.sample_xml_no_lanes = f.read()
+        else:
+            cls.sample_xml_no_lanes = None
         
         # Load sample expected output
         json_file = test_data_dir / 'optics_lane_rpc_prom.json'
@@ -46,6 +54,14 @@ class TestOpticsDiagnosticsParser(unittest.TestCase):
                 cls.expected_lane_sample = json.load(f)
         else:
             cls.expected_lane_sample = None
+        
+        # Load sample expected interface-level output
+        json_file2 = test_data_dir / 'optics_interface_rpc_prom2.json'
+        if json_file2.exists():
+            with open(json_file2, 'r') as f:
+                cls.expected_interface_sample = json.load(f)
+        else:
+            cls.expected_interface_sample = None
     
     def test_extract_numeric_value(self):
         """Test numeric value extraction."""
@@ -274,6 +290,100 @@ class TestOpticsDiagnosticsParser(unittest.TestCase):
             interface = result['interfaces'][0]
             for field in required_interface_fields:
                 self.assertIn(field, interface, f"Missing required interface field: {field}")
+    
+    def test_interface_without_lanes(self):
+        """Test parsing interface with DOM metrics but no lanes (xe-0/0/6)."""
+        if not self.sample_xml_no_lanes:
+            self.skipTest("Sample XML file (optics_rpc_response2.xml) not found")
+        
+        result = parse_optical_diagnostics(self.sample_xml_no_lanes, "10.209.3.39")
+        
+        # Verify structure
+        self.assertIn('interfaces', result)
+        self.assertIn('lanes', result)
+        
+        # Should have one interface, no lanes
+        self.assertEqual(len(result['interfaces']), 1)
+        self.assertEqual(len(result['lanes']), 0)
+        
+        interface = result['interfaces'][0]
+        
+        # Verify basic structure
+        self.assertEqual(interface['if_name'], 'xe-0/0/6')
+        self.assertEqual(interface['device'], '10.209.3.39')
+        
+        # Verify threshold metrics
+        self.assertEqual(interface['temperature_high_alarm'], 90.0)
+        self.assertEqual(interface['temperature_low_alarm'], -10.0)
+        self.assertEqual(interface['voltage_high_alarm'], 3.630)
+        self.assertEqual(interface['voltage_low_alarm'], 2.970)
+        
+        # Verify direct DOM metrics (these are now at interface level, not in lanes)
+        self.assertEqual(interface['temperature'], 38.5)
+        self.assertEqual(interface['voltage'], 3.3280)
+        self.assertEqual(interface['tx_bias'], 5.382)
+        self.assertEqual(interface['tx_power_mw'], 0.5910)
+        self.assertEqual(interface['tx_power'], -2.28)
+        self.assertEqual(interface['rx_power_mw'], 0.6282)
+        self.assertEqual(interface['rx_power'], -2.02)
+        
+        print("\nInterface without lanes metrics:", json.dumps(interface, indent=2))
+    
+    def test_interface_level_dom_metrics(self):
+        """Test that DOM metrics are correctly parsed at interface level."""
+        if not self.sample_xml_no_lanes:
+            self.skipTest("Sample XML file (optics_rpc_response2.xml) not found")
+        
+        root = ET.fromstring(self.sample_xml_no_lanes)
+        phys_interface = None
+        for pi in findall_recursive_ns(root, 'physical-interface'):
+            if findtext_ns(pi, 'name') == 'xe-0/0/6':
+                phys_interface = pi
+                break
+        
+        self.assertIsNotNone(phys_interface, "xe-0/0/6 interface not found")
+        
+        metrics = parse_interface_metrics(phys_interface, "10.209.3.39")
+        
+        # Verify DOM metrics are present
+        self.assertIsNotNone(metrics['tx_bias'])
+        self.assertIsNotNone(metrics['tx_power_mw'])
+        self.assertIsNotNone(metrics['tx_power'])
+        self.assertIsNotNone(metrics['rx_power_mw'])
+        self.assertIsNotNone(metrics['rx_power'])
+        
+        # Verify values match expected (comparing with expected JSON if available)
+        if self.expected_interface_sample:
+            self.assertEqual(metrics['tx_bias'], self.expected_interface_sample['tx_bias'])
+            self.assertEqual(metrics['tx_power_mw'], self.expected_interface_sample['tx_power_mw'])
+            self.assertEqual(metrics['tx_power'], self.expected_interface_sample['tx_power'])
+            self.assertEqual(metrics['rx_power_mw'], self.expected_interface_sample['rx_power_mw'])
+            self.assertEqual(metrics['rx_power'], self.expected_interface_sample['rx_power'])
+    
+    def test_mixed_interfaces(self):
+        """Test handling of both interface types in same response."""
+        if not self.sample_xml or not self.sample_xml_no_lanes:
+            self.skipTest("Sample XML files not found")
+        
+        # Combine both XML responses (this is a theoretical test)
+        # In practice, you'd have a single XML with both types of interfaces
+        
+        # Test with lanes
+        result1 = parse_optical_diagnostics(self.sample_xml, "10.209.3.39")
+        self.assertGreater(len(result1['lanes']), 0, "Should have lane metrics")
+        
+        # Test without lanes
+        result2 = parse_optical_diagnostics(self.sample_xml_no_lanes, "10.209.3.39")
+        self.assertEqual(len(result2['lanes']), 0, "Should not have lane metrics")
+        self.assertGreater(len(result2['interfaces']), 0, "Should have interface metrics")
+        
+        # Verify interface-level metrics exist in both cases
+        if result1['interfaces']:
+            self.assertIn('if_name', result1['interfaces'][0])
+        if result2['interfaces']:
+            self.assertIn('if_name', result2['interfaces'][0])
+            # This interface should have DOM metrics at interface level
+            self.assertIsNotNone(result2['interfaces'][0].get('tx_bias'))
 
 
 def run_tests():

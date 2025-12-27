@@ -86,13 +86,13 @@ def parse_interface_metrics(phys_interface: ET.Element, device: str,
     
     # Temperature thresholds
     metrics['temperature_high_alarm'] = extract_numeric_value(
-        findtext_ns(optics_diag, 'laser-temperature-high-alarm-threshold'))
+        findtext_ns(optics_diag, 'module-temperature-high-alarm-threshold'))
     metrics['temperature_low_alarm'] = extract_numeric_value(
-        findtext_ns(optics_diag, 'laser-temperature-low-alarm-threshold'))
+        findtext_ns(optics_diag, 'module-temperature-low-alarm-threshold'))
     metrics['temperature_high_warn'] = extract_numeric_value(
-        findtext_ns(optics_diag, 'laser-temperature-high-warn-threshold'))
+        findtext_ns(optics_diag, 'module-temperature-high-warn-threshold'))
     metrics['temperature_low_warn'] = extract_numeric_value(
-        findtext_ns(optics_diag, 'laser-temperature-low-warn-threshold'))
+        findtext_ns(optics_diag, 'module-temperature-low-warn-threshold'))
     
     # Voltage thresholds
     metrics['voltage_high_alarm'] = extract_numeric_value(
@@ -153,6 +153,31 @@ def parse_interface_metrics(phys_interface: ET.Element, device: str,
     # Voltage - extract from text content
     metrics['voltage'] = extract_numeric_value(
         findtext_ns(optics_diag, 'module-voltage'))
+    
+    # DOM metrics for interfaces without lanes (directly at interface level)
+    # TX bias current
+    metrics['tx_bias'] = extract_numeric_value(
+        findtext_ns(optics_diag, 'laser-bias-current'))
+    
+    # TX power (mW)
+    metrics['tx_power_mw'] = extract_numeric_value(
+        findtext_ns(optics_diag, 'laser-output-power'))
+    
+    # TX power (dBm)
+    metrics['tx_power'] = extract_numeric_value(
+        findtext_ns(optics_diag, 'laser-output-power-dbm'))
+    
+    # RX power (mW) - check both possible field names
+    rx_power_mw = findtext_ns(optics_diag, 'laser-rx-optical-power')
+    if not rx_power_mw:
+        rx_power_mw = findtext_ns(optics_diag, 'rx-signal-avg-optical-power')
+    metrics['rx_power_mw'] = extract_numeric_value(rx_power_mw)
+    
+    # RX power (dBm) - check both possible field names
+    rx_power_dbm = findtext_ns(optics_diag, 'laser-rx-optical-power-dbm')
+    if not rx_power_dbm:
+        rx_power_dbm = findtext_ns(optics_diag, 'rx-signal-avg-optical-power-dbm')
+    metrics['rx_power'] = extract_numeric_value(rx_power_dbm)
     
     # Add additional metadata if provided
     if additional_metadata:
