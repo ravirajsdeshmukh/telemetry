@@ -82,11 +82,23 @@ def json_to_prometheus(data: dict, job: str, instance: str) -> str:
         if interface.get('tx_bias_low_warn') is not None:
             lines.append(f'tx_bias_low_warn{{{base_labels}}} {interface["tx_bias_low_warn"]}')
         
-        # Current measured values
+        # Current measured values (always at interface level)
         if interface.get('temperature') is not None:
             lines.append(f'temperature{{{base_labels}}} {interface["temperature"]}')
         if interface.get('voltage') is not None:
             lines.append(f'voltage{{{base_labels}}} {interface["voltage"]}')
+        
+        # DOM metrics at interface level (for interfaces without lanes)
+        if interface.get('tx_bias') is not None:
+            lines.append(f'tx_bias{{{base_labels}}} {interface["tx_bias"]}')
+        if interface.get('tx_power_mw') is not None:
+            lines.append(f'tx_power_mw{{{base_labels}}} {interface["tx_power_mw"]}')
+        if interface.get('tx_power') is not None:
+            lines.append(f'tx_power{{{base_labels}}} {interface["tx_power"]}')
+        if interface.get('rx_power_mw') is not None:
+            lines.append(f'rx_power_mw{{{base_labels}}} {interface["rx_power_mw"]}')
+        if interface.get('rx_power') is not None:
+            lines.append(f'rx_power{{{base_labels}}} {interface["rx_power"]}')
     
     # Process lane-level metrics (measurements)
     for lane in data.get('lanes', []):
