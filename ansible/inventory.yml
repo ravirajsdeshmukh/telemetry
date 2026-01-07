@@ -21,6 +21,49 @@ all:
           ansible_port: 22
           # Optional: Device-specific interface filter (comma-separated)
           interface_filter: "et-0/0/32"
+        xai-qfx5240-01.englab.juniper.net: #XAI RMAed device
+          ansible_user: root
+          ansible_password: Embe1mpls
+          ansible_network_os: junipernetworks.junos.junos
+          ansible_connection: netconf
+          ansible_ssh_common_args: '-o PreferredAuthentications=password'
+          ansible_port: 22
+          interface_filter: > 
+            et-0/0/11:0, et-0/0/9:0, et-0/0/20:0, et-0/0/20:1, 
+            et-0/0/22:0, et-0/0/22:1, et-0/0/23:0, et-0/0/23:1, 
+            et-0/0/21:1, et-0/0/21:0, et-0/0/19:0, et-0/0/19:1, 
+            et-0/0/13:1, et-0/0/26:0, et-0/0/26:1, et-0/0/16:1,
+            et-0/0/17:0, et-0/0/17:1, et-0/0/14:0, et-0/0/14:1,
+            et-0/0/18:0, et-0/0/18:1, et-0/0/32:0, et-0/0/3:0, 
+            et-0/0/32:1, et-0/0/6:0, et-0/0/34:0, et-0/0/34:1,
+            et-0/0/4:1, et-0/0/7:0, et-0/0/33:0, et-0/0/33:1, 
+            et-0/0/31:0, et-0/0/31:1, et-0/0/24:0, et-0/0/30:1
+        kakao-fa-qfx5220.englab.juniper.net: #KAKAO RMAed device
+          ansible_user: root
+          ansible_password: Embe1mpls
+          ansible_network_os: junipernetworks.junos.junos
+          ansible_connection: netconf
+          ansible_ssh_common_args: '-o PreferredAuthentications=password'
+          ansible_port: 22
+          interface_filter: > 
+            et-0/0/8, et-0/0/9, et-0/0/10, et-0/0/11, 
+            et-0/0/12, et-0/0/13, et-0/0/20, et-0/0/21, 
+            et-0/0/7, et-0/0/1, et-0/0/2, et-0/0/3, 
+            et-0/0/4, et-0/0/5, et-0/0/6, et-0/0/0,
+            et-0/0/27, et-0/0/14, et-0/0/15, et-0/0/28,
+            et-0/0/29, et-0/0/30, et-0/0/31, et-0/0/22, 
+            et-0/0/23, et-0/0/16, et-0/0/17, et-0/0/18, 
+            et-0/0/19, et-0/0/24, et-0/0/25
+        dcf-glen8-evo.englab.juniper.net: #KAKAO RMAed device
+          ansible_user: root
+          ansible_password: Embe1mpls
+          ansible_network_os: junipernetworks.junos.junos
+          ansible_connection: netconf
+          ansible_ssh_common_args: '-o PreferredAuthentications=password'
+          ansible_port: 22
+          interface_filter: > 
+            et-0/0/2:0, et-0/0/5:1, et-0/0/3:0, et-0/0/3:2, 
+            et-0/0/4:1, et-0/0/2:2, et-0/0/3:0, et-0/0/3:1 
         # 10.83.6.222: # XAI RMAed QFX
         #   ansible_user: root
         #   ansible_password: fasetup123
