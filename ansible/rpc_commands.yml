@@ -1,22 +1,36 @@
 ---
 # Configuration file for RPC commands and their parsers
 # Add new RPC commands here with their corresponding parser scripts
+# Parser path format: {vendor}/{parser_name}
 
 rpc_commands:
+  # System information - collected first to get device metadata
+  - name: system_information
+    rpc: get-system-information
+    parser: juniper/system_information
+    description: "Collect device hostname, model, and OS version"
+  
+  # Chassis inventory - collected second to get transceiver metadata
+  - name: chassis_inventory
+    rpc: get-chassis-inventory
+    parser: juniper/chassis_inventory
+    description: "Collect device serial number and transceiver metadata (vendor, part number, serial)"
+  
+  # Optics diagnostics - collected last, will be merged with system and chassis data
   - name: optics_diagnostics
     rpc: get-interface-optics-diagnostics-information
-    parser: optics_diagnostics
+    parser: juniper/optics_diagnostics
     description: "Collect optical interface diagnostics (power, temperature, bias current)"
   
   # Example: Add more RPC commands here
   # - name: interface_statistics
   #   rpc: get-interface-information
-  #   parser: interface_statistics
+  #   parser: juniper/interface_statistics
   #   description: "Collect interface statistics"
   #
   # - name: chassis_environment
   #   rpc: get-environment-information
-  #   parser: chassis_environment
+  #   parser: juniper/chassis_environment
   #   description: "Collect chassis environment information"
   #
   # - name: route_summary

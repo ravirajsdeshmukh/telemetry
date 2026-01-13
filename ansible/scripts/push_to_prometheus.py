@@ -27,10 +27,37 @@ def json_to_prometheus(data: dict, job: str, instance: str) -> str:
     # Process interface-level metrics (thresholds)
     for interface in data.get('interfaces', []):
         if_name = interface.get('if_name', 'unknown')
-        device = interface.get('device', instance)
         
-        # Base labels for interface metrics (no lane)
-        base_labels = f'device="{device}",interface="{if_name}"'
+        # Build base labels with metadata
+        labels = [
+            f'interface="{if_name}"'
+        ]
+        
+        # Add device-level metadata
+        if interface.get('origin_hostname'):
+            labels.append(f'origin_hostname="{interface["origin_hostname"]}"')
+        if interface.get('device_profile'):
+            labels.append(f'device_profile="{interface["device_profile"]}"')
+        if interface.get('origin_name'):
+            labels.append(f'origin_name="{interface["origin_name"]}"')
+        
+        # Add transceiver metadata
+        if interface.get('vendor'):
+            labels.append(f'vendor="{interface["vendor"]}"')
+        if interface.get('part_number'):
+            labels.append(f'part_number="{interface["part_number"]}"')
+        if interface.get('serial_number'):
+            labels.append(f'serial_number="{interface["serial_number"]}"')
+        if interface.get('media_type'):
+            labels.append(f'media_type="{interface["media_type"]}"')
+        if interface.get('cable_type'):
+            labels.append(f'cable_type="{interface["cable_type"]}"')
+        if interface.get('wavelength'):
+            labels.append(f'wavelength="{interface["wavelength"]}"')
+        if interface.get('fiber_type'):
+            labels.append(f'fiber_type="{interface["fiber_type"]}"')
+        
+        base_labels = ','.join(labels)
         
         # Temperature thresholds
         if interface.get('temperature_high_alarm') is not None:
@@ -104,10 +131,38 @@ def json_to_prometheus(data: dict, job: str, instance: str) -> str:
     for lane in data.get('lanes', []):
         if_name = lane.get('if_name', 'unknown')
         lane_num = lane.get('lane', 0)
-        device = lane.get('device', instance)
         
-        # Base labels for lane metrics (includes lane)
-        base_labels = f'device="{device}",interface="{if_name}",lane="{lane_num}"'
+        # Build base labels with metadata (includes lane)
+        labels = [
+            f'interface="{if_name}"',
+            f'lane="{lane_num}"'
+        ]
+        
+        # Add device-level metadata
+        if lane.get('origin_hostname'):
+            labels.append(f'origin_hostname="{lane["origin_hostname"]}"')
+        if lane.get('device_profile'):
+            labels.append(f'device_profile="{lane["device_profile"]}"')
+        if lane.get('origin_name'):
+            labels.append(f'origin_name="{lane["origin_name"]}"')
+        
+        # Add transceiver metadata
+        if lane.get('vendor'):
+            labels.append(f'vendor="{lane["vendor"]}"')
+        if lane.get('part_number'):
+            labels.append(f'part_number="{lane["part_number"]}"')
+        if lane.get('serial_number'):
+            labels.append(f'serial_number="{lane["serial_number"]}"')
+        if lane.get('media_type'):
+            labels.append(f'media_type="{lane["media_type"]}"')
+        if lane.get('cable_type'):
+            labels.append(f'cable_type="{lane["cable_type"]}"')
+        if lane.get('wavelength'):
+            labels.append(f'wavelength="{lane["wavelength"]}"')
+        if lane.get('fiber_type'):
+            labels.append(f'fiber_type="{lane["fiber_type"]}"')
+        
+        base_labels = ','.join(labels)
         
         # RX power metrics
         if lane.get('rx_power_mw') is not None:

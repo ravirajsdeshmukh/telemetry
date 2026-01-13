@@ -1,0 +1,379 @@
+junos_devices:
+  hosts:
+    garnet-qfx5240-a.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    garnet-qfx5240-c.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22	
+    garnet-qfx5240-d.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22	  
+    garnet-qfx5240-e.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    garnet-qfx5240-f.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    garnet-qfx5240-optics.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    garnet-qfx5240-timing-a.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    garnet2-qfx5241-32od-a.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    garnet2-qfx5241-32od-b.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    glenrothes-ndut-a.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    glenrothes-ndut-c.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    glenrothes-ndut-d.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    glenrothes-ndut-e.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    glenrothes-ndut-f.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.209.3.39:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    dcf-onyx27-jun.englab.juniper.net:
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+      interface_filter: "xe-0/0/48:2, xe-0/0/48:3, xe-0/0/6, xe-0/0/7, xe-0/0/52:3, xe-0/0/21"
+    xai-qfx5240-01.englab.juniper.net: #XAI RMAed device
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+      interface_filter: > 
+        et-0/0/11:0, et-0/0/9:0, et-0/0/20:0, et-0/0/20:1, 
+        et-0/0/22:0, et-0/0/22:1, et-0/0/23:0, et-0/0/23:1, 
+        et-0/0/21:1, et-0/0/21:0, et-0/0/19:0, et-0/0/19:1, 
+        et-0/0/13:1, et-0/0/26:0, et-0/0/26:1, et-0/0/16:1,
+        et-0/0/17:0, et-0/0/17:1, et-0/0/14:0, et-0/0/14:1,
+        et-0/0/18:0, et-0/0/18:1, et-0/0/32:0, et-0/0/3:0, 
+        et-0/0/32:1, et-0/0/6:0, et-0/0/34:0, et-0/0/34:1,
+        et-0/0/4:1, et-0/0/7:0, et-0/0/33:0, et-0/0/33:1, 
+        et-0/0/31:0, et-0/0/31:1, et-0/0/24:0, et-0/0/30:1
+    kakao-fa-qfx5220.englab.juniper.net: #KAKAO RMAed device
+      ansible_user: root
+      ansible_password: Embe1mpls
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+      interface_filter: > 
+        et-0/0/8, et-0/0/9, et-0/0/10, et-0/0/11, 
+        et-0/0/12, et-0/0/13, et-0/0/20, et-0/0/21, 
+        et-0/0/7, et-0/0/1, et-0/0/2, et-0/0/3, 
+        et-0/0/4, et-0/0/5, et-0/0/6, et-0/0/0,
+        et-0/0/27, et-0/0/14, et-0/0/15, et-0/0/28,
+        et-0/0/29, et-0/0/30, et-0/0/31, et-0/0/22, 
+        et-0/0/23, et-0/0/16, et-0/0/17, et-0/0/18, 
+        et-0/0/19, et-0/0/24, et-0/0/25
+    10.161.37.177: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.37.176: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.37.175: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.37.182: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.37.181: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.37.180: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.37.179: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.37.178: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.37: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.38: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.39: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.40: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.41: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.42: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.43: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.44: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.35: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.36: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.37.164: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.37.113: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.32.64: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.32.65: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.34.248: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.34.249: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.32.96: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.32.97: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.33.38: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.33.39: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.51: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.52: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.30: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.17: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22
+    10.161.38.29: #AI/ML PoC Lab
+      ansible_user: jnpr
+      ansible_password: pass123
+      ansible_network_os: junipernetworks.junos.junos
+      ansible_connection: netconf
+      ansible_ssh_common_args: '-o PreferredAuthentications=password'
+      ansible_port: 22

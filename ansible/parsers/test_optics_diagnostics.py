@@ -10,9 +10,9 @@ import sys
 from pathlib import Path
 
 # Add parent directory to path to import the parser
-sys.path.insert(0, str(Path(__file__).parent))
+# sys.path.insert(0, str(Path(__file__).parent))
 
-from optics_diagnostics import (
+from parsers.optics_diagnostics import (
     parse_optical_diagnostics,
     parse_interface_metrics,
     parse_lane_metrics,
