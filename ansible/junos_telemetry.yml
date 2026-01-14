@@ -40,10 +40,6 @@
       junipernetworks.junos.junos_rpc:
         rpc: "{{ item.rpc }}"
         output: xml
-        # host: "{{ inventory_hostname }}"
-        # port: "{{ netconf_port }}"
-        # username: "{{ ansible_user }}"
-        # password: "{{ ansible_password }}"
       register: rpc_results
       loop: "{{ rpc_config.rpc_commands }}"
       loop_control:
