@@ -83,6 +83,7 @@ services:
       - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
       - ../output:/output
       - /home/ubuntu/.ssh:/root/.ssh:ro
+      - ./mounts/raw_ml_data:/raw_ml_data      
     networks:
       - monitoring
     restart: unless-stopped

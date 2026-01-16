@@ -57,8 +57,8 @@ def extract_interface_dom_metrics(device_data: Dict) -> List[Dict]:
     origin_hostname = device_data.get('origin_hostname', '')
     origin_name = device_data.get('origin_name', origin_hostname)
     device_profile = device_data.get('device_profile', '')
-    timestamp = int(datetime.now().timestamp())
-    collection_timestamp = datetime.now().isoformat()
+    timestamp = int(datetime.utcnow().timestamp())
+    collection_timestamp = datetime.utcnow().isoformat() + 'Z'
     
     # Process interface-level metrics from optics_diagnostics
     for interface in device_data.get('optics_diagnostics', {}).get('interfaces', []):
@@ -93,8 +93,8 @@ def extract_lane_dom_metrics(device_data: Dict) -> List[Dict]:
     
     origin_hostname = device_data.get('origin_hostname', '')
     origin_name = device_data.get('origin_name', origin_hostname)
-    timestamp = int(datetime.now().timestamp())
-    collection_timestamp = datetime.now().isoformat()
+    timestamp = int(datetime.utcnow().timestamp())
+    collection_timestamp = datetime.utcnow().isoformat() + 'Z'
     
     # Process lane-level metrics from optics_diagnostics
     for lane in device_data.get('optics_diagnostics', {}).get('lanes', []):
@@ -128,8 +128,8 @@ def extract_interface_counters(device_data: Dict) -> List[Dict]:
     
     origin_hostname = device_data.get('origin_hostname', '')
     origin_name = device_data.get('origin_name', origin_hostname)
-    timestamp = int(datetime.now().timestamp())
-    collection_timestamp = datetime.now().isoformat()
+    timestamp = int(datetime.utcnow().timestamp())
+    collection_timestamp = datetime.utcnow().isoformat() + 'Z'
     
     # Process interface statistics
     for interface in device_data.get('interface_statistics', {}).get('interfaces', []):
@@ -299,9 +299,9 @@ def process_all_devices(metrics_dir: str, base_dir: str, compression: str = 'sna
             traceback.print_exc()
             continue
     
-    # Create hourly partition path
-    now = datetime.now()
-    partition_dir = create_hourly_partition_path(base_dir, now)
+    # Create hourly partition path based on UTC time
+    now_utc = datetime.utcnow()
+    partition_dir = create_hourly_partition_path(base_dir, now_utc)
     
     print(f"\nWriting hourly Parquet files to {partition_dir}...")
     
