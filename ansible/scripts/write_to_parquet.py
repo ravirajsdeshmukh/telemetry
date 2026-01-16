@@ -119,6 +119,15 @@ def write_to_parquet(data: Dict, base_dir: str, metric_type: str,
     df['collection_date'] = datetime.now().strftime('%Y-%m-%d')
     df['collection_timestamp'] = datetime.now().isoformat()
     
+    # Ensure string columns remain as strings (not dictionary-encoded)
+    # This prevents schema incompatibility errors when reading multiple files
+    string_columns = ['device', 'interface', 'if_name', 'admin_status', 
+                     'oper_status', 'collection_time', 'collection_date', 
+                     'collection_timestamp', 'metric_type']
+    for col in string_columns:
+        if col in df.columns:
+            df[col] = df[col].astype(str)
+    
     # Create partition path
     collection_date = datetime.now()
     partition_dir = create_partition_path(
@@ -132,15 +141,15 @@ def write_to_parquet(data: Dict, base_dir: str, metric_type: str,
     filename = f"{metric_type}_{timestamp_str}.parquet"
     file_path = partition_dir / filename
     
-    # Convert to PyArrow Table
-    table = pa.Table.from_pandas(df)
+    # Convert to PyArrow Table with explicit schema to prevent dictionary encoding
+    table = pa.Table.from_pandas(df, preserve_index=False)
     
     # Write parquet file
     pq.write_table(
         table,
         file_path,
         compression=compression,
-        use_dictionary=True,  # Efficient for repeated values
+        use_dictionary=False,  # Disable dictionary encoding to ensure schema consistency
         write_statistics=True  # Enable predicate pushdown
     )
     
