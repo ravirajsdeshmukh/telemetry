@@ -303,6 +303,9 @@ def process_all_devices(metrics_dir: str, base_dir: str, compression: str = 'sna
     now_utc = datetime.utcnow()
     partition_dir = create_hourly_partition_path(base_dir, now_utc)
     
+    # Generate timestamp suffix for filenames to avoid overwriting
+    timestamp_str = now_utc.strftime('%Y%m%d_%H%M%S')
+    
     print(f"\nWriting hourly Parquet files to {partition_dir}...")
     
     # Create separate subdirectories for each metric type
@@ -314,22 +317,22 @@ def process_all_devices(metrics_dir: str, base_dir: str, compression: str = 'sna
     lane_dom_dir.mkdir(exist_ok=True)
     intf_counters_dir.mkdir(exist_ok=True)
     
-    # Write 3 Parquet files to their respective directories
+    # Write 3 Parquet files to their respective directories with timestamps
     write_parquet_file(
         all_interface_dom,
-        intf_dom_dir / 'interface_dom.parquet',
+        intf_dom_dir / f'interface_dom_{timestamp_str}.parquet',
         compression
     )
     
     write_parquet_file(
         all_lane_dom,
-        lane_dom_dir / 'lane_dom.parquet',
+        lane_dom_dir / f'lane_dom_{timestamp_str}.parquet',
         compression
     )
     
     write_parquet_file(
         all_interface_counters,
-        intf_counters_dir / 'interface_counters.parquet',
+        intf_counters_dir / f'interface_counters_{timestamp_str}.parquet',
         compression
     )
     

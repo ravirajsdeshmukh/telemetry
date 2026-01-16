@@ -142,27 +142,6 @@
         msg: "{{ merge_result.stdout_lines }}"
       when: merge_result is defined and merge_result.stdout_lines is defined
     
-    # ML data collection pipeline - calculate deltas and write to Parquet
-    - name: Calculate FEC error deltas for interface statistics
-      script: >
-        scripts/calculate_throughput.py
-        --input "{{ output_dir }}/{{ inventory_hostname }}_interface_statistics_metrics.json"
-        --output "{{ output_dir }}/{{ inventory_hostname }}_interface_statistics_metrics.json"
-        --state-dir "{{ output_dir }}/throughput_state"
-      args:
-        executable: python3
-        chdir: "{{ playbook_dir }}"
-      environment:
-        PYTHONPATH: "{{ playbook_dir }}"
-      when: "'interface_statistics' in rpc_config.rpc_commands | map(attribute='name')"
-      register: throughput_result
-      ignore_errors: yes
-    
-    - name: Display throughput calculation result
-      debug:
-        msg: "{{ throughput_result.stdout_lines }}"
-      when: throughput_result is defined and throughput_result.stdout_lines is defined
-    
     - name: Write optics diagnostics to Parquet for ML training
       script: >
         scripts/write_to_parquet.py
