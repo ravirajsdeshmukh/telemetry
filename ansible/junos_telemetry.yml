@@ -39,6 +39,7 @@
     - name: Execute RPC commands on Junos device
       junipernetworks.junos.junos_rpc:
         rpc: "{{ item.rpc }}"
+        args: "{{ item.rpc_args | default({}) }}"
         output: xml
       register: rpc_results
       loop: "{{ rpc_config.rpc_commands }}"
@@ -74,8 +75,8 @@
         --input "{{ output_dir }}/{{ inventory_hostname }}_{{ item.item.name }}_raw.xml"
         --output "{{ output_dir }}/{{ inventory_hostname }}_{{ item.item.name }}_metrics.json"
         --device "{{ inventory_hostname }}"
-        --format json
-        {% if device_interface_filter and item.item.name == 'optics_diagnostics' %}--interfaces "{{ device_interface_filter }}"{% endif %}
+        {% if device_interface_filter and (item.item.name == 'optics_diagnostics' or item.item.name == 'interface_statistics') %}--interfaces "{{ device_interface_filter }}"{% endif %}
+        {% if item.item.name != 'interface_statistics' %}--format json{% endif %}
       args:
         executable: python3
         chdir: "{{ playbook_dir }}"
@@ -139,6 +140,75 @@
       debug:
         msg: "{{ merge_result.stdout_lines }}"
       when: merge_result is defined and merge_result.stdout_lines is defined
+    
+    # ML data collection pipeline - calculate deltas and write to Parquet
+    - name: Calculate FEC error deltas for interface statistics
+      script: >
+        scripts/calculate_throughput.py
+        --input "{{ output_dir }}/{{ inventory_hostname }}_interface_statistics_metrics.json"
+        --output "{{ output_dir }}/{{ inventory_hostname }}_interface_statistics_metrics.json"
+        --state-dir "{{ output_dir }}/throughput_state"
+      args:
+        executable: python3
+        chdir: "{{ playbook_dir }}"
+      environment:
+        PYTHONPATH: "{{ playbook_dir }}"
+      when: "'interface_statistics' in rpc_config.rpc_commands | map(attribute='name')"
+      register: throughput_result
+      ignore_errors: yes
+    
+    - name: Display throughput calculation result
+      debug:
+        msg: "{{ throughput_result.stdout_lines }}"
+      when: throughput_result is defined and throughput_result.stdout_lines is defined
+    
+    - name: Write optics diagnostics to Parquet for ML training
+      script: >
+        scripts/write_to_parquet.py
+        --input "{{ output_dir }}/{{ inventory_hostname }}_optics_diagnostics_metrics.json"
+        --base-dir "{{ output_dir }}/ml_data"
+        --metric-type "optical"
+        --device "{{ inventory_hostname }}"
+      args:
+        executable: python3
+        chdir: "{{ playbook_dir }}"
+      environment:
+        PYTHONPATH: "{{ playbook_dir }}"
+      when: "'optics_diagnostics' in rpc_config.rpc_commands | map(attribute='name')"
+      register: optics_parquet_result
+      ignore_errors: yes
+    
+    - name: Write interface statistics to Parquet for ML training
+      script: >
+        scripts/write_to_parquet.py
+        --input "{{ output_dir }}/{{ inventory_hostname }}_interface_statistics_metrics.json"
+        --base-dir "{{ output_dir }}/ml_data"
+        --metric-type "interface_stats"
+        --device "{{ inventory_hostname }}"
+      args:
+        executable: python3
+        chdir: "{{ playbook_dir }}"
+      environment:
+        PYTHONPATH: "{{ playbook_dir }}"
+      when: "'interface_statistics' in rpc_config.rpc_commands | map(attribute='name')"
+      register: interface_parquet_result
+      ignore_errors: yes
+    
+    - name: Write PIC details to Parquet for ML training
+      script: >
+        scripts/write_to_parquet.py
+        --input "{{ output_dir }}/{{ inventory_hostname }}_pic_detail_metrics.json"
+        --base-dir "{{ output_dir }}/ml_data"
+        --metric-type "pic_detail"
+        --device "{{ inventory_hostname }}"
+      args:
+        executable: python3
+        chdir: "{{ playbook_dir }}"
+      environment:
+        PYTHONPATH: "{{ playbook_dir }}"
+      when: pic_detail_result is defined and pic_detail_result.rc == 0
+      register: pic_parquet_result
+      ignore_errors: yes
     
     - name: Push metrics to Prometheus Pushgateway
       script: >

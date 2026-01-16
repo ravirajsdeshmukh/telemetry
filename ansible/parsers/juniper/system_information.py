@@ -63,7 +63,7 @@ def parse_system_information(xml_content: str, device: str) -> Dict:
     
     # Format device_profile as "Juniper_{model}"
     if result['hardware_model']:
-        result['device_profile'] = f"Juniper_{result['hardware_model']}"
+        result['device_profile'] = f"Juniper_{result['hardware_model']}".upper()
     else:
         result['device_profile'] = None
     

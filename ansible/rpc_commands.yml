@@ -22,6 +22,12 @@ rpc_commands:
     parser: juniper/optics_diagnostics
     description: "Collect optical interface diagnostics (power, temperature, bias current)"
   
+  # Interface statistics - collect FEC data for ML training (non-extensive to reduce compute load)
+  - name: interface_statistics
+    rpc: get-interface-information
+    parser: juniper/interface_statistics
+    description: "Collect FEC corrected/uncorrected errors, error rates, pre-FEC BER, and histogram for ML training"
+  
   # Example: Add more RPC commands here
   # - name: interface_statistics
   #   rpc: get-interface-information
