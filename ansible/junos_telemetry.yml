@@ -213,13 +213,14 @@
   
   vars:
     output_dir: "{{ '../output' if playbook_dir != '/ansible' else '/output' }}"
+    raw_ml_data_dir: "{{ '/raw_ml_data' if playbook_dir == '/ansible' else '../raw_ml_data' }}"
   
   tasks:
     - name: Write aggregated hourly Parquet files (interface_dom, lane_dom, interface_counters)
       script: >
         scripts/write_hourly_parquet.py
         --metrics-dir "{{ output_dir }}"
-        --base-dir "{{ output_dir }}/raw_ml_data"
+        --base-dir "{{ raw_ml_data_dir }}"
         --compression snappy
       args:
         executable: python3

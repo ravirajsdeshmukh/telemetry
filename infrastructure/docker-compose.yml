@@ -79,11 +79,11 @@ services:
       SEMAPHORE_LDAP_ACTIVATED: 'no'
       ANSIBLE_HOST_KEY_CHECKING: 'false'
     volumes:
+      - /home/ubuntu/.ssh:/root/.ssh:ro    
       - ../ansible:/ansible:ro
       - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
-      - ../output:/output
-      - /home/ubuntu/.ssh:/root/.ssh:ro
-      - ./mounts/raw_ml_data:/raw_ml_data      
+      - ./mounts/output:/output
+      - ./mounts/raw_ml_data:/raw_ml_data
     networks:
       - monitoring
     restart: unless-stopped
