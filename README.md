@@ -12,43 +12,179 @@ Ansible playbook for collecting telemetry from Junos devices via NETCONF and exp
 
 ## Requirements
 
+### Python Packages
 ```bash
 pip install ansible
 pip install junos-eznc
 pip install requests
-ansible-galaxy collection install junipernetworks.junos
+pip install pyarrow>=11.0.0
+pip install pandas>=1.5.0
+pip install boto3>=1.26.0
+pip install botocore>=1.29.0
+```
+
+### Ansible Collections
+```bash
+ansible-galaxy collection install -r requirements.yml
+# Installs:
+# - junipernetworks.junos >=5.0.0
+# - community.aws >=6.0.0
 ```
 
 ## Directory Structure
 
 ```
 .
-├── junos_telemetry.yml           # Main Ansible playbook
-├── inventory.yml                 # Device inventory
-├── rpc_commands.yml              # RPC commands configuration
-├── parsers/                      # Parser scripts for different RPCs
-│   ├── optics_diagnostics.py    # Parser for optical diagnostics
-│   └── template_parser.py       # Template for creating new parsers
-├── scripts/                      # Utility scripts
-│   └── push_to_prometheus.py    # Push metrics to Prometheus
-└── output/                       # Generated metrics and raw XML (created at runtime)
+├── ansible/
+│   ├── junos_telemetry.yml           # Main Ansible playbook
+│   ├── inventory.yml                 # Production device inventory
+│   ├── junos_devices_semaphore.yaml  # Semaphore inventory (xai, regression groups)
+│   ├── rpc_commands.yml              # RPC commands configuration
+│   ├── requirements.yml              # Ansible collection dependencies
+│   ├── requirements.txt              # Python package dependencies
+│   ├── group_vars/                   # Group-level variables
+│   │   ├── all/                      # Variables for all hosts
+│   │   │   ├── vars.yml              # AWS credential references
+│   │   │   └── vault.yml             # Encrypted AWS credentials
+│   │   ├── junos/                    # Production device credentials
+│   │   │   ├── vars.yml              # Connection settings
+│   │   │   └── vault.yml             # Encrypted device credentials
+│   │   ├── xai/                      # XAI RMA device credentials
+│   │   │   ├── vars.yml              # Connection settings
+│   │   │   └── vault.yml             # Encrypted credentials
+│   │   └── regression/               # Regression lab credentials
+│   │       ├── vars.yml              # Connection settings
+│   │       └── vault.yml             # Encrypted credentials
+│   ├── vault/
+│   │   └── vault_password            # Vault decryption password (DO NOT COMMIT)
+│   ├── parsers/                      # Parser scripts for different RPCs
+│   │   ├── common/                   # Shared utilities
+│   │   │   ├── xml_utils.py          # XML parsing helpers
+│   │   │   ├── fiber_detection.py    # Fiber type detection
+│   │   │   └── interface_mapping.py  # Interface name mapping
+│   │   └── juniper/                  # Juniper-specific parsers
+│   │       ├── optics_diagnostics.py # Optical diagnostics parser
+│   │       ├── chassis_inventory.py  # Hardware inventory parser
+│   │       ├── system_information.py # System info parser
+│   │       ├── interface_statistics.py # Interface counters parser
+│   │       └── merge_metadata.py     # Metadata merger
+│   └── scripts/                      # Utility scripts
+│       ├── push_to_prometheus.py     # Push metrics to Prometheus
+│       ├── write_hourly_parquet.py   # Aggregate to hourly Parquet files
+│       ├── write_to_parquet.py       # Per-device Parquet writer
+│       └── collect_pic_details.py    # Collect transceiver details
+├── output/                           # Temporary metrics and raw XML
+├── raw_ml_data/                      # ML training data (Parquet format)
+│   └── dt=YYYY-MM-DD/
+│       └── hr=HH/
+│           ├── intf-dom/             # Interface-level DOM metrics
+│           ├── lane-dom/             # Lane-level DOM metrics
+│           └── intf-counters/        # Interface traffic counters
+├── infrastructure/
+│   ├── docker-compose.yml            # Prometheus, Grafana, Pushgateway
+│   ├── prometheus.yml                # Prometheus configuration
+│   └── mounts/                       # Docker volume mounts
+└── docs/                             # Documentation
+    ├── ANSIBLE_VAULT_SETUP.md        # Credential management
+    ├── S3_SYNC_SETUP.md              # AWS S3 data lake sync
+    ├── SEMAPHORE_SETUP.md            # Semaphore orchestration
+    ├── INTERFACE_FILTERING.md        # Interface filtering
+    └── ML_DATA_COLLECTION.md         # ML data format and usage
 ```
 
 ## Configuration
 
-### 1. Inventory (inventory.yml)
+### 1. Vault Password
 
-Update the device IP, username, and password:
+Create a vault password file (this is used to decrypt credentials):
 
-```yaml
-junos_devices:
-  hosts:
-    10.209.3.39:
-      ansible_user: root
-      ansible_password: Empe1mpls
+```bash
+cd ansible
+echo "your_vault_password" > vault/vault_password
+chmod 600 vault/vault_password
 ```
 
-### 2. RPC Commands (rpc_commands.yml)
+**Important**: Add `vault/vault_password` to `.gitignore` - never commit this file!
+
+### 2. Device Credentials
+
+Credentials are stored in encrypted Ansible Vault files under `group_vars/`. See [docs/ANSIBLE_VAULT_SETUP.md](docs/ANSIBLE_VAULT_SETUP.md) for details.
+
+#### Quick Setup:
+
+```bash
+# Create temporary file with credentials
+cat > /tmp/vault_temp.yml <<EOF
+---
+vault_junos_username: root
+vault_junos_password: YourPassword
+EOF
+
+# Encrypt and save
+ansible-vault encrypt /tmp/vault_temp.yml \
+  --vault-password-file vault/vault_password \
+  --output group_vars/junos/vault.yml
+
+# Clean up
+rm /tmp/vault_temp.yml
+chmod 600 group_vars/junos/vault.yml
+```
+
+### 3. Inventory Files
+
+**inventory.yml** - Production devices:
+```yaml
+all:
+  children:
+    junos:
+      hosts:
+        device1.example.com:
+          interface_filter: "et-0/0/32"
+        device2.example.com:
+          interface_filter: "et-0/0/0,et-0/0/1"
+```
+
+**junos_devices_semaphore.yaml** - Organized by device groups:
+```yaml
+all:
+  children:
+    junos_devices:
+      children:
+        xai:  # XAI RMA devices
+          hosts:
+            xai-qfx5240-01.englab.juniper.net:
+              interface_filter: "et-0/0/11:0,et-0/0/9:0"
+        regression:  # Regression lab devices
+          hosts:
+            garnet-qfx5240-a.englab.juniper.net:
+```
+
+Credentials are automatically loaded from `group_vars/{group_name}/vault.yml`.
+
+### 4. AWS Credentials (for S3 Sync)
+
+AWS credentials for S3 data lake sync are stored in `group_vars/all/vault.yml`:
+
+```bash
+# Create temporary file
+cat > /tmp/vault_aws_temp.yml <<EOF
+---
+vault_aws_access_key_id: "YOUR_ACCESS_KEY"
+vault_aws_secret_access_key: "YOUR_SECRET_KEY"
+vault_aws_session_token: "YOUR_SESSION_TOKEN"  # Optional, for STS credentials
+EOF
+
+# Encrypt
+ansible-vault encrypt /tmp/vault_aws_temp.yml \
+  --vault-password-file vault/vault_password \
+  --output group_vars/all/vault.yml
+
+rm /tmp/vault_aws_temp.yml
+```
+
+See [docs/S3_SYNC_SETUP.md](docs/S3_SYNC_SETUP.md) for details.
+
+### 5. RPC Commands (rpc_commands.yml)
 
 Define the RPC commands to execute and their parsers:
 
@@ -64,24 +200,59 @@ rpc_commands:
 
 ### Basic Execution
 
-Run the playbook to collect metrics from all devices:
+Run the playbook with vault password file:
 
 ```bash
-ansible-playbook -i inventory.yml junos_telemetry.yml
+cd ansible
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password
+```
+
+Or with Semaphore inventory:
+
+```bash
+ansible-playbook junos_telemetry.yml \
+  -i junos_devices_semaphore.yaml \
+  --vault-password-file vault/vault_password
+```
+
+### Target Specific Device Groups
+
+Run only for XAI devices:
+```bash
+ansible-playbook junos_telemetry.yml \
+  -i junos_devices_semaphore.yaml \
+  --vault-password-file vault/vault_password \
+  --limit xai
+```
+
+Run only for regression devices:
+```bash
+ansible-playbook junos_telemetry.yml \
+  -i junos_devices_semaphore.yaml \
+  --vault-password-file vault/vault_password \
+  --limit regression
 ```
 
 ### Without Prometheus Pushgateway
 
-If you don't want to push to Prometheus, just collect and save metrics:
+If you don't want to push to Prometheus:
 
 ```bash
-ansible-playbook -i inventory.yml junos_telemetry.yml -e "prometheus_pushgateway="
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password \
+  -e "prometheus_pushgateway="
 ```
 
 ### Custom Output Directory
 
 ```bash
-ansible-playbook -i inventory.yml junos_telemetry.yml -e "output_dir=/tmp/metrics"
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password \
+  -e "output_dir=/tmp/metrics"
 ```
 
 ### Filter Specific Interfaces
@@ -90,41 +261,43 @@ Monitor only specific interfaces by setting the `interface_filter` variable:
 
 ```bash
 # Monitor only two specific interfaces (applies to all devices)
-ansible-playbook -i inventory.yml junos_telemetry.yml \
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password \
   -e 'interface_filter="et-0/0/32,et-0/0/33"'
 
 # Monitor single interface
-ansible-playbook -i inventory.yml junos_telemetry.yml \
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password \
   -e 'interface_filter="et-0/0/32"'
 ```
 
 **Per-Device Filtering:**
 
-For different interfaces on each device, configure `interface_filter` in [inventory.yml](inventory.yml):
+For different interfaces on each device, configure `interface_filter` in your inventory file:
 
 ```yaml
-junos_devices:
-  hosts:
-    10.209.3.39:
-      ansible_user: root
-      ansible_password: yourpass
-      interface_filter: "et-0/0/32,et-0/0/33"  # Specific to this device
-    
-    10.83.6.222:
-      ansible_user: root
-      ansible_password: yourpass
-      interface_filter: "et-0/0/48"  # Different interfaces for this device
-    
-    192.168.1.1:
-      ansible_user: root
-      ansible_password: yourpass
-      # No filter set - monitors all interfaces
+all:
+  children:
+    junos:
+      hosts:
+        device1.example.com:
+          interface_filter: "et-0/0/32,et-0/0/33"  # Specific to this device
+        
+        device2.example.com:
+          interface_filter: "et-0/0/48"  # Different interfaces
+        
+        device3.example.com:
+          # No filter - monitors all interfaces
 ```
 
 Then run without `-e` flag:
 
 ```bash
-ansible-playbook -i inventory.yml junos_telemetry.yml
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password
 ```
 
 **Filter Precedence:**
@@ -146,9 +319,61 @@ See [docs/INTERFACE_FILTERING.md](docs/INTERFACE_FILTERING.md) for detailed exam
 ### With Prometheus Pushgateway
 
 ```bash
-ansible-playbook -i inventory.yml junos_telemetry.yml \
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password \
   -e "prometheus_pushgateway=http://your-pushgateway:9091"
 ```
+
+## Data Lake and ML Training
+
+The playbook automatically creates hourly Parquet files for ML training:
+
+```
+raw_ml_data/
+└── dt=2026-01-18/
+    └── hr=14/
+        ├── intf-dom/
+        │   └── interface_dom_20260118_140613.parquet
+        ├── lane-dom/
+        │   └── lane_dom_20260118_140613.parquet
+        └── intf-counters/
+            └── interface_counters_20260118_140613.parquet
+```
+
+**Features:**
+- Hive-style partitioning by date and hour
+- Snappy compression for storage efficiency
+- Three separate schemas for different metric types
+- Automatic S3 sync to `s3://amzn-ds-s3-rrd/datalake/`
+
+See [docs/ML_DATA_COLLECTION.md](docs/ML_DATA_COLLECTION.md) for schema details and query examples.
+
+## S3 Data Lake Sync
+
+After each collection, data is automatically synced to S3:
+
+```yaml
+# Configured in group_vars/all/vault.yml
+vault_aws_access_key_id: "YOUR_KEY"
+vault_aws_secret_access_key: "YOUR_SECRET"
+vault_aws_session_token: "YOUR_TOKEN"  # For STS credentials
+```
+
+To disable S3 sync, comment out AWS credentials or run without them.
+
+See [docs/S3_SYNC_SETUP.md](docs/S3_SYNC_SETUP.md) for configuration details.
+
+## Semaphore Orchestration
+
+For scheduled execution and enterprise orchestration:
+
+1. Use `junos_devices_semaphore.yaml` inventory
+2. Configure task templates in Semaphore UI
+3. Set up cron schedules (e.g., `*/5 * * * *` for 5-minute intervals)
+4. Configure vault password as environment variable
+
+See [docs/SEMAPHORE_SETUP.md](docs/SEMAPHORE_SETUP.md) for full setup instructions.
 
 ## Metrics Generated
 
@@ -208,6 +433,69 @@ junos_optics_rx_power_dbm{job="junos_telemetry",instance="10.209.3.39",device="1
 junos_optics_tx_power_dbm{job="junos_telemetry",instance="10.209.3.39",device="10.209.3.39",interface="et-0/0/32",lane="0"} -2.32
 junos_optics_tx_bias_current_milliamps{job="junos_telemetry",instance="10.209.3.39",device="10.209.3.39",interface="et-0/0/32",lane="0"} 6.157
 ```
+
+## Credential Architecture
+
+### Overview
+
+The project uses Ansible Vault for secure credential management with a hierarchical group-based structure:
+
+```
+group_vars/
+├── all/              # Credentials available to ALL hosts
+│   ├── vault.yml     # AWS credentials (encrypted)
+│   └── vars.yml      # Variable references
+├── junos/            # Production device credentials
+│   ├── vault.yml     # Device credentials (encrypted)
+│   └── vars.yml      # Connection settings
+├── xai/              # XAI RMA device credentials
+│   ├── vault.yml     # Device credentials (encrypted)
+│   └── vars.yml      # Connection settings
+└── regression/       # Regression lab credentials
+    ├── vault.yml     # Device credentials (encrypted)
+    └── vars.yml      # Connection settings
+```
+
+### Group Hierarchy
+
+**inventory.yml** (Production):
+```
+all
+└── junos
+    └── hosts: device1.example.com, device2.example.com, ...
+```
+
+**junos_devices_semaphore.yaml** (Organized by function):
+```
+all
+└── junos_devices
+    ├── xai (RMAed devices for failure analysis)
+    │   └── hosts: xai-qfx5240-01, kakao-fa-qfx5220
+    └── regression (Lab test devices)
+        └── hosts: garnet-qfx5240-a, garnet-qfx5240-c, ...
+```
+
+### Variable Precedence
+
+Ansible loads variables in this order (later overrides earlier):
+1. `group_vars/all/` - AWS credentials (all hosts)
+2. `group_vars/{group_name}/` - Device-specific credentials
+3. Host-specific variables in inventory
+
+This allows:
+- Shared AWS credentials across all devices
+- Different device credentials per group (production vs lab)
+- Per-device interface filters
+
+### Security Features
+
+- **Encryption**: All credentials encrypted with AES256
+- **Single password file**: `vault/vault_password` decrypts all vaults
+- **No plaintext**: Never commit unencrypted credentials
+- **Separation**: Device credentials separate from AWS credentials
+- **Permissions**: All vault files have 600 permissions (owner read/write only)
+
+See [docs/ANSIBLE_VAULT_SETUP.md](docs/ANSIBLE_VAULT_SETUP.md) for complete documentation.
 
 ## Testing
 

@@ -20,60 +20,102 @@ s3://amzn-ds-s3-rrd/datalake/
     └── ...
 ```
 
-## AWS Access Key Configuration
+## AWS Credentials Configuration
 
-### Option 1: Environment Variables (Recommended for Docker)
-Set AWS credentials as environment variables in docker-compose.yml:
+### Recommended: Ansible Vault (Production)
 
-```yaml
-semaphore:
-  environment:
-    - AWS_ACCESS_KEY_ID=your_access_key_id
-    - AWS_SECRET_ACCESS_KEY=your_secret_access_key
-```
+AWS credentials are stored in encrypted vault files at `group_vars/all/vault.yml`:
 
-### Option 2: Ansible Vault (Recommended for Host)
-1. Create an encrypted vault file:
+1. Create the encrypted vault:
 ```bash
-cd /home/ubuntu/workspace/telemetry/ansible
-ansible-vault create group_vars/all/vault.yml
+cd ansible
+
+# Create temporary file with credentials
+cat > /tmp/vault_aws_temp.yml <<EOF
+---
+vault_aws_access_key_id: "YOUR_ACCESS_KEY_ID"
+vault_aws_secret_access_key: "YOUR_SECRET_ACCESS_KEY"
+vault_aws_session_token: "YOUR_SESSION_TOKEN"  # Optional, for STS credentials
+EOF
+
+# Encrypt and save
+ansible-vault encrypt /tmp/vault_aws_temp.yml \
+  --vault-password-file vault/vault_password \
+  --output group_vars/all/vault.yml
+
+# Clean up
+rm /tmp/vault_aws_temp.yml
+chmod 600 group_vars/all/vault.yml
 ```
 
-2. Add your AWS credentials:
-```yaml
-aws_access_key_id: AKIAIOSFODNN7EXAMPLE
-aws_secret_access_key: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-```
-
-3. Reference in playbook (already configured):
-```yaml
-aws_access_key: "{{ aws_access_key_id }}"
-aws_secret_key: "{{ aws_secret_access_key }}"
-```
-
-4. Run playbook with vault:
+2. Create variable references:
 ```bash
-ansible-playbook junos_telemetry.yml --ask-vault-pass
+cat > group_vars/all/vars.yml <<EOF
+---
+# AWS S3 credentials for datalake sync
+aws_access_key_id: "{{ vault_aws_access_key_id }}"
+aws_secret_access_key: "{{ vault_aws_secret_access_key }}"
+aws_session_token: "{{ vault_aws_session_token }}"
+EOF
 ```
 
-### Option 3: Pass as Extra Variables
+3. Run playbook:
 ```bash
 ansible-playbook junos_telemetry.yml \
-  -e "aws_access_key_id=AKIAIOSFODNN7EXAMPLE" \
-  -e "aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+  -i inventory.yml \
+  --vault-password-file vault/vault_password
 ```
 
-### Option 4: Use AWS Instance Profile (IAM Role)
-If running on an EC2 instance with an IAM role that has S3 permissions, remove the aws_access_key and aws_secret_key parameters from the task. The module will automatically use the instance profile credentials.
+The credentials are automatically decrypted and used by the S3 sync task.
+
+### Alternative: Environment Variables (Docker/Semaphore)
+
+For containerized environments, set credentials as environment variables:
+
+```yaml
+# docker-compose.yml or Semaphore task environment
+environment:
+  - AWS_ACCESS_KEY_ID=your_access_key_id
+  - AWS_SECRET_ACCESS_KEY=your_secret_access_key
+  - AWS_SESSION_TOKEN=your_session_token  # Optional
+```
+
+Then update the playbook S3 sync task to read from environment:
+```yaml
+environment:
+  AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') | default(aws_access_key_id, true) }}"
+  AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') | default(aws_secret_access_key, true) }}"
+  AWS_SESSION_TOKEN: "{{ lookup('env', 'AWS_SESSION_TOKEN') | default(aws_session_token, true) }}"
+```
 
 ## S3 Sync Task Details
 
-The sync task is configured in `junos_telemetry.yml`:
-- **Module**: `community.aws.s3_sync`
+The sync task is configured in `junos_telemetry.yml` (second play):
+
+```yaml
+- name: Sync raw_ml_data to S3 datalake
+  community.aws.s3_sync:
+    bucket: amzn-ds-s3-rrd
+    file_root: "{{ raw_ml_data_dir }}"
+    key_prefix: datalake/
+    region: us-east-1
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+    AWS_SESSION_TOKEN: "{{ aws_session_token | default('') }}"
+  register: s3_sync_result
+  ignore_errors: yes
+  when: aws_access_key_id is defined and aws_secret_access_key is defined
+```
+
+**Key Features:**
+- **Module**: `community.aws.s3_sync` (requires community.aws >= 6.0.0)
 - **Bucket**: `amzn-ds-s3-rrd`
 - **Key Prefix**: `datalake/`
 - **Region**: `us-east-1`
-- **When**: Runs after hourly Parquet files are created
+- **When**: Runs only if AWS credentials are defined (skipped otherwise)
+- **Timing**: Runs after hourly Parquet files are created
+- **Session Token**: Supports temporary STS credentials
 
 ## Required IAM Permissions
 
@@ -101,32 +143,42 @@ The AWS access key must have the following S3 permissions:
 
 ## Installation Requirements
 
-### On Host
+### Python Packages
 ```bash
-pip install boto3 botocore
+pip install boto3>=1.26.0 botocore>=1.29.0
+```
+
+### Ansible Collections
+```bash
 ansible-galaxy collection install community.aws
+# Or use requirements.yml:
+ansible-galaxy collection install -r requirements.yml
 ```
 
-### In Docker Container
-Already configured. If needed:
+The `requirements.yml` file should contain:
+```yaml
+collections:
+  - name: junipernetworks.junos
+    version: ">=5.0.0"
+  - name: community.aws
+    version: ">=6.0.0"
+```
+
+## Manual S3 Sync
+
+To manually trigger S3 sync without collecting new telemetry:
+
 ```bash
-docker exec semaphore pip3 install boto3 botocore
-docker exec semaphore ansible-galaxy collection install community.aws
+cd ansible
+
+# Sync existing data
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password \
+  --tags s3_sync
 ```
 
-## Manual Sync
-To manually sync without running the full playbook:
-
-```bash
-# From host
-cd /home/ubuntu/workspace/telemetry/ansible
-ansible-playbook -i localhost, -c local sync_to_s3.yml
-
-# From Docker container
-docker exec -w /ansible semaphore ansible-playbook sync_to_s3.yml
-```
-
-Create `sync_to_s3.yml`:
+Or create a dedicated sync playbook `sync_to_s3.yml`:
 ```yaml
 ---
 - name: Sync raw_ml_data to S3
@@ -143,26 +195,40 @@ Create `sync_to_s3.yml`:
         bucket: amzn-ds-s3-rrd
         file_root: "{{ raw_ml_data_dir }}"
         key_prefix: datalake/
-        aws_access_key: "{{ aws_access_key_id }}"
-        aws_secret_key: "{{ aws_secret_access_key }}"
-        region: "us-east-1"
+        region: us-east-1
       environment:
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_SESSION_TOKEN: "{{ aws_session_token | default('') }}"
+      register: s3_sync_result
+
+    - name: Display sync result
+      debug:
+        msg: "{{ s3_sync_result }}"
+```
+
+Run with:
+```bash
+ansible-playbook sync_to_s3.yml --vault-password-file vault/vault_password
 ```
 
 ## Scheduling Periodic Syncs
 
-### Option 1: Semaphore Scheduled Tasks
-1. In Semaphore UI, create a new Template
+### Option 1: Semaphore Scheduled Tasks (Recommended)
+
+1. In Semaphore UI, create a new Task Template
 2. Set playbook: `junos_telemetry.yml`
-3. Add Schedule: every 5 minutes
-4. Semaphore will automatically run the playbook and sync to S3
+3. Set inventory: `inventory.yml` or `junos_devices_semaphore.yaml`
+4. Add environment variable: `ANSIBLE_VAULT_PASSWORD_FILE=/ansible/vault/vault_password`
+5. Set schedule: `*/5 * * * *` (every 5 minutes)
+6. Semaphore will automatically run collection and sync to S3
+
+See [SEMAPHORE_SETUP.md](SEMAPHORE_SETUP.md) for detailed Semaphore configuration.
 
 ### Option 2: Cron Job
 ```bash
-# Add to crontab: sync every hour at minute 5
-5 * * * * cd /home/ubuntu/workspace/telemetry/ansible && /home/ubuntu/venv310/bin/ansible-playbook junos_telemetry.yml --vault-password-file ~/.vault_pass
+# Add to crontab: sync every 5 minutes
+*/5 * * * * cd /home/ubuntu/workspace/telemetry/ansible && /home/ubuntu/venv310/bin/ansible-playbook junos_telemetry.yml -i inventory.yml --vault-password-file vault/vault_password >> /var/log/telemetry_cron.log 2>&1
 ```
 
 ## Monitoring S3 Sync
