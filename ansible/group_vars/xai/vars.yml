@@ -1,0 +1,8 @@
+---
+# XAI group variable references
+ansible_user: "{{ vault_xai_username }}"
+ansible_password: "{{ vault_xai_password }}"
+ansible_network_os: junipernetworks.junos.junos
+ansible_connection: netconf
+ansible_ssh_common_args: '-o PreferredAuthentications=password'
+ansible_port: 22

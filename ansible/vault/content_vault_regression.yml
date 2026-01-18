@@ -1,0 +1,4 @@
+---
+# Encrypted credentials for Regression devices
+vault_regression_username: root
+vault_regression_password: Embe1mpls

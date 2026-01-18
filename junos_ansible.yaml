@@ -1,6 +1,6 @@
 ---
 - name: Get Device Information
-  hosts: junos_devices
+  hosts: all
   connection: juniper.device.pyez
   gather_facts: no
 
