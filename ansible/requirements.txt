@@ -8,3 +8,6 @@ xmltodict>=0.13.0
 # ML data collection dependencies
 pyarrow>=11.0.0
 pandas>=1.5.0
+# AWS integration for S3 data lake
+boto3>=1.26.0
+botocore>=1.29.0

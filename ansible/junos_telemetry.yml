@@ -233,3 +233,22 @@
       debug:
         msg: "{{ hourly_parquet_result.stdout_lines }}"
       when: hourly_parquet_result.stdout_lines is defined
+
+    - name: Sync raw_ml_data to S3 datalake
+      community.aws.s3_sync:
+        bucket: amzn-ds-s3-rrd
+        file_root: "{{ raw_ml_data_dir }}"
+        key_prefix: datalake/
+        region: us-east-1
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+        AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+        AWS_SESSION_TOKEN: "{{ aws_session_token | default('') }}"
+      register: s3_sync_result
+      ignore_errors: yes
+      when: aws_access_key_id is defined and aws_secret_access_key is defined
+
+    - name: Display S3 sync result
+      debug:
+        msg: "{{ s3_sync_result }}"
+      when: s3_sync_result is defined
