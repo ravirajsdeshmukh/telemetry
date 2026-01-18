@@ -1,0 +1,12 @@
+---
+# Credentials for XAI RMAed devices group
+vault_xai_username: root
+vault_xai_password: Embe1mpls
+
+# Credentials for Regression test devices group
+vault_regression_username: root
+vault_regression_password: Embe1mpls
+
+# Credentials for standard Junos devices (original inventory.yml)
+vault_junos_username: root
+vault_junos_password: Embe1mpls

@@ -1,0 +1,4 @@
+---
+# Encrypted credentials for XAI devices
+vault_xai_username: root
+vault_xai_password: Embe1mpls

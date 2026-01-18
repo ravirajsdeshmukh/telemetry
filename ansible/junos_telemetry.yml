@@ -1,6 +1,6 @@
 ---
 - name: Collect Junos Telemetry and Export to Prometheus
-  hosts: junos_devices
+  hosts: all
   connection: local
   gather_facts: no
   
