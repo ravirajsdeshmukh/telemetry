@@ -24,8 +24,9 @@ def json_to_prometheus(data: dict, job: str, instance: str) -> str:
     """
     lines = []
     
-    # Process interface-level metrics (thresholds)
+    # Process interface-level metrics (thresholds and FEC statistics)
     for interface in data.get('interfaces', []):
+        # Get interface name (uniform 'if_name' across all metric types)
         if_name = interface.get('if_name', 'unknown')
         
         # Build base labels with metadata
@@ -126,6 +127,43 @@ def json_to_prometheus(data: dict, job: str, instance: str) -> str:
             lines.append(f'rx_power_mw{{{base_labels}}} {interface["rx_power_mw"]}')
         if interface.get('rx_power') is not None:
             lines.append(f'rx_power{{{base_labels}}} {interface["rx_power"]}')
+        
+        # Interface statistics (admin/oper status, traffic, speed)
+        if interface.get('admin_status') is not None:
+            # Convert status to numeric (0=down, 1=up)
+            admin_value = 1 if interface['admin_status'] == 'up' else 0
+            lines.append(f'interface_admin_status{{{base_labels}}} {admin_value}')
+        if interface.get('oper_status') is not None:
+            oper_value = 1 if interface['oper_status'] == 'up' else 0
+            lines.append(f'interface_oper_status{{{base_labels}}} {oper_value}')
+        if interface.get('speed_bps') is not None:
+            lines.append(f'interface_speed_bps{{{base_labels}}} {interface["speed_bps"]}')
+        if interface.get('input_bps') is not None:
+            lines.append(f'interface_input_bps{{{base_labels}}} {interface["input_bps"]}')
+        if interface.get('input_pps') is not None:
+            lines.append(f'interface_input_pps{{{base_labels}}} {interface["input_pps"]}')
+        if interface.get('output_bps') is not None:
+            lines.append(f'interface_output_bps{{{base_labels}}} {interface["output_bps"]}')
+        if interface.get('output_pps') is not None:
+            lines.append(f'interface_output_pps{{{base_labels}}} {interface["output_pps"]}')
+        
+        # FEC statistics (Forward Error Correction)
+        if interface.get('fec_ccw') is not None:
+            lines.append(f'interface_fec_ccw{{{base_labels}}} {interface["fec_ccw"]}')
+        if interface.get('fec_nccw') is not None:
+            lines.append(f'interface_fec_nccw{{{base_labels}}} {interface["fec_nccw"]}')
+        if interface.get('fec_ccw_error_rate') is not None:
+            lines.append(f'interface_fec_ccw_error_rate{{{base_labels}}} {interface["fec_ccw_error_rate"]}')
+        if interface.get('fec_nccw_error_rate') is not None:
+            lines.append(f'interface_fec_nccw_error_rate{{{base_labels}}} {interface["fec_nccw_error_rate"]}')
+        if interface.get('pre_fec_ber') is not None:
+            lines.append(f'interface_pre_fec_ber{{{base_labels}}} {interface["pre_fec_ber"]}')
+        
+        # FEC histogram bins (if present)
+        for i in range(16):
+            bin_key = f'histogram_bin_{i}'
+            if interface.get(bin_key) is not None:
+                lines.append(f'interface_fec_histogram_bin_{i}{{{base_labels}}} {interface[bin_key]}')
     
     # Process lane-level metrics (measurements)
     for lane in data.get('lanes', []):
