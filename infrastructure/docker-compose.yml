@@ -80,17 +80,27 @@ services:
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       SEMAPHORE_USE_REMOTE_RUNNER: 'true'
       SEMAPHORE_RUNNER_REGISTRATION_TOKEN: 'gs72mPntFATGJs9qK0pQ0rKtfidlexiMjYCH9gWKhTU='
-    volumes:
-      - /home/ubuntu/.ssh:/root/.ssh:ro    
-      - ../ansible:/ansible:ro
-      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
-      - ./mounts/output:/output
-      - ./mounts/raw_ml_data:/raw_ml_data
     networks:
       - monitoring
     restart: unless-stopped
     depends_on:
       - postgres
+
+  semaphore-runner1:
+    image: semaphoreui/runner:v2.16.47
+    container_name: semaphore-runner01
+    user: "1000:1000"
+    environment:
+      SEMAPHORE_SERVER: http://10.221.80.101:3001
+      SEMAPHORE_RUNNER_REGISTRATION_TOKEN: gs72mPntFATGJs9qK0pQ0rKtfidlexiMjYCH9gWKhTU=
+      SEMAPHORE_RUNNER_NAME: semaphore-runner01
+      SEMAPHORE_RUNNER_TAGS: semaphore-runner01
+      ANSIBLE_HOST_KEY_CHECKING: 'false'
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - semaphore
 
 networks:
   monitoring:
