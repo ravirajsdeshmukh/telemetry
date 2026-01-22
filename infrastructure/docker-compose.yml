@@ -93,7 +93,7 @@ services:
       - ./mounts/semaphore_runners:/etc/semaphore_runners
       # - /home/ubuntu/.ssh:/root/.ssh:ro    
       # - ../ansible:/ansible:ro
-      # - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
+      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
       - ./mounts/output:/output
       - ./mounts/raw_ml_data:/raw_ml_data
       - ./mounts/tmp_semaphoreui:/tmp/semaphore
@@ -109,14 +109,17 @@ services:
       SEMAPHORE_RUNNER_NAME: semaphore-runner01
       SEMAPHORE_RUNNER_TAGS: semaphore-runner01
       ANSIBLE_HOST_KEY_CHECKING: 'false'
+      HOME: /home/semaphore
     networks:
       - monitoring
     restart: unless-stopped
     depends_on:
       - semaphore
     volumes:
+      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
       - ./mounts/semaphore_runners:/etc/semaphore_runners
       - ./mounts/tmp_semaphorerunner:/tmp/semaphore
+      - ./mounts/semaphore_runner01_home:/home/semaphore
 
 networks:
   monitoring:
