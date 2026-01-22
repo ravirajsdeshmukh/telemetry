@@ -230,6 +230,7 @@
         chdir: "{{ playbook_dir }}"
       environment:
         PYTHONPATH: "{{ playbook_dir }}"
+        SEMAPHORE_RUNNER_NAME: "{{ lookup('env', 'SEMAPHORE_RUNNER_NAME') | default('local', true) }}"
       register: hourly_parquet_result
     
     - name: Display hourly Parquet results
@@ -237,11 +238,11 @@
         msg: "{{ hourly_parquet_result.stdout_lines }}"
       when: hourly_parquet_result.stdout_lines is defined
 
-    - name: Sync raw_ml_data to S3 datalake
+    - name: Sync raw_ml_data to S3 datalake (today's data only)
       community.aws.s3_sync:
         bucket: amzn-ds-s3-rrd
-        file_root: "{{ raw_ml_data_dir }}"
-        key_prefix: datalake/
+        file_root: "{{ raw_ml_data_dir }}/dt={{ lookup('pipe', 'date -u +%Y-%m-%d') }}"
+        key_prefix: "datalake/dt={{ lookup('pipe', 'date -u +%Y-%m-%d') }}/"
         region: us-east-1
       environment:
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"

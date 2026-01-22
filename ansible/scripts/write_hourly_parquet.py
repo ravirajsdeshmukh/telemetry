@@ -317,22 +317,25 @@ def process_all_devices(metrics_dir: str, base_dir: str, compression: str = 'sna
     lane_dom_dir.mkdir(exist_ok=True)
     intf_counters_dir.mkdir(exist_ok=True)
     
-    # Write 3 Parquet files to their respective directories with timestamps
+    # Get runner name from environment variable
+    runner_name = os.environ.get('SEMAPHORE_RUNNER_NAME', 'unknown')
+    
+    # Write 3 Parquet files to their respective directories with timestamps and runner name
     write_parquet_file(
         all_interface_dom,
-        intf_dom_dir / f'interface_dom_{timestamp_str}.parquet',
+        intf_dom_dir / f'interface_dom_{runner_name}_{timestamp_str}.parquet',
         compression
     )
     
     write_parquet_file(
         all_lane_dom,
-        lane_dom_dir / f'lane_dom_{timestamp_str}.parquet',
+        lane_dom_dir / f'lane_dom_{runner_name}_{timestamp_str}.parquet',
         compression
     )
     
     write_parquet_file(
         all_interface_counters,
-        intf_counters_dir / f'interface_counters_{timestamp_str}.parquet',
+        intf_counters_dir / f'interface_counters_{runner_name}_{timestamp_str}.parquet',
         compression
     )
     
