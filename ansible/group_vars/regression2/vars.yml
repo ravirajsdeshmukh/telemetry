@@ -1,7 +1,7 @@
 ---
-# XAI group variable references
-ansible_user: "{{ vault_xai_username }}"
-ansible_password: "{{ vault_xai_password }}"
+# Regression group variable references
+ansible_user: "{{ vault_regression_username }}"
+ansible_password: "{{ vault_regression_password }}"
 ansible_network_os: junipernetworks.junos.junos
 ansible_connection: netconf
 ansible_host_key_checking: false

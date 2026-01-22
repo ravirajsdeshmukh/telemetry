@@ -4,5 +4,6 @@ ansible_user: "{{ vault_junos_username }}"
 ansible_password: "{{ vault_junos_password }}"
 ansible_network_os: junipernetworks.junos.junos
 ansible_connection: netconf
+ansible_host_key_checking: false
 ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password'
-ansible_port: 22
+ansible_port: 830
