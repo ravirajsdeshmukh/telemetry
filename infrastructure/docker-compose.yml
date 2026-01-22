@@ -75,20 +75,53 @@ services:
       SEMAPHORE_ADMIN_NAME: admin
       SEMAPHORE_ADMIN_EMAIL: admin@localhost
       SEMAPHORE_ADMIN: admin
-      SEMAPHORE_ACCESS_KEY_ENCRYPTION: gs72mPntFATGJs9qK0pQ0rKtfidlexiMjYCH9gWKhTU=
+      # Generate using command => head -c32 /dev/urandom | base64
+      # If this access key is changed, then from semaphore UI, the secrets used in variable
+      # groups or configured in key store nee to be re-created.
+      SEMAPHORE_ACCESS_KEY_ENCRYPTION: bA17hoSEzRt091rK5EZPnSVs1uojBlWgP59NIx3JuDc= 
       SEMAPHORE_LDAP_ACTIVATED: 'no'
       ANSIBLE_HOST_KEY_CHECKING: 'false'
-    volumes:
-      - /home/ubuntu/.ssh:/root/.ssh:ro    
-      - ../ansible:/ansible:ro
-      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
-      - ./mounts/output:/output
-      - ./mounts/raw_ml_data:/raw_ml_data
+      SEMAPHORE_USE_REMOTE_RUNNER: 'true'
+      SEMAPHORE_RUNNER_REGISTRATION_TOKEN: runnertoken12345
+      SEMAPHORE_TMP_PATH: /tmp/semaphore
     networks:
       - monitoring
     restart: unless-stopped
     depends_on:
       - postgres
+    volumes:
+      - ./mounts/semaphore_runners:/etc/semaphore_runners
+      # - /home/ubuntu/.ssh:/root/.ssh:ro    
+      # - ../ansible:/ansible:ro
+      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
+      - ./mounts/output:/tmp/semaphore/output
+      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
+      # - ./mounts/tmp_semaphoreui:/tmp/semaphore
+
+  semaphore-runner01:
+    image: semaphoreui/runner:v2.16.47
+    container_name: semaphore-runner01
+    # user: "1000:1000"
+    environment:
+      SEMAPHORE_WEB_ROOT: http://10.221.80.101:3001
+      SEMAPHORE_RUNNER_TOKEN: mEuxxri3HNFgieqX3uXD5Lk2bovfHd5C9+k2MJ7uvUY=
+      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner1.key.pem
+      SEMAPHORE_RUNNER_NAME: semaphore-runner01
+      SEMAPHORE_RUNNER_TAGS: semaphore-runner01
+      ANSIBLE_HOST_KEY_CHECKING: 'false'
+      HOME: /home/semaphore
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - semaphore
+    volumes:
+      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
+      - ./mounts/semaphore_runners:/etc/semaphore_runners
+      - ./mounts/output:/tmp/semaphore/output
+      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
+      # - ./mounts/tmp_semaphorerunner:/tmp/semaphore
+      # - ./mounts/semaphore_runner01_home:/home/semaphore
 
 networks:
   monitoring:

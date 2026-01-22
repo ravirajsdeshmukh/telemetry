@@ -24,9 +24,8 @@ all:
             et-0/0/29, et-0/0/30, et-0/0/31, et-0/0/22, 
             et-0/0/23, et-0/0/16, et-0/0/17, et-0/0/18, 
             et-0/0/19, et-0/0/24, et-0/0/25
-    
     # Regression test devices group (garnet & glenrothes lab devices)
-    regression:
+    regression1:
       hosts:
         garnet-qfx5240-a.englab.juniper.net:
         garnet-qfx5240-c.englab.juniper.net:
@@ -40,5 +39,13 @@ all:
         glenrothes-ndut-d.englab.juniper.net:
         glenrothes-ndut-f.englab.juniper.net:
         10.209.3.39:
-        dcf-onyx27-jun.englab.juniper.net:
-          interface_filter: "xe-0/0/48:2, xe-0/0/48:3, xe-0/0/6, xe-0/0/7, xe-0/0/52:3, xe-0/0/21"
+        dcf-hill7-evo.englab.juniper.net:
+        dcf-hill9-evo.englab.juniper.net:
+        dcf-hill10-evo.englab.juniper.net:
+        dcf-sap6-evo.englab.juniper.net:
+        dcf-glen5-evo.englab.juniper.net:
+        dcf-glen6-evo.englab.juniper.net:
+        dcf-glen7-evo.englab.juniper.net:
+        dcf-glen8-evo.englab.juniper.net:
+
+

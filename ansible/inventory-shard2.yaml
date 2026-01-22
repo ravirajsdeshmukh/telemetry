@@ -1,0 +1,17 @@
+---
+all:
+  children:
+    regression2:
+      hosts:
+        dcf-onyx17-jun.englab.juniper.net:
+        dcf-onyx19-jun.englab.juniper.net:
+        dcf-onyx20-jun.englab.juniper.net:
+        dcf-onyx21-jun.englab.juniper.net:
+        dcf-onyx24-jun.englab.juniper.net:
+        dcf-onyx27-jun.englab.juniper.net:
+        dcf-merus8-jun.englab.juniper.net:
+        dcf-merus9-jun.englab.juniper.net:
+        dcf-merus10-jun.englab.juniper.net:
+        dcf-npnk2-jun.englab.juniper.net:
+
+        

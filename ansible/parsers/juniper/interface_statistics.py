@@ -136,7 +136,7 @@ def parse_interface_statistics(xml_content: str, device: str, interface_filter: 
         name_elem = interface.find('name')
         if name_elem is not None and name_elem.text:
             interface_name = name_elem.text.strip()
-            interface_data['interface'] = interface_name
+            interface_data['if_name'] = interface_name
         else:
             continue  # Skip interfaces without a name
         
