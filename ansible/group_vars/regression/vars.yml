@@ -4,5 +4,5 @@ ansible_user: "{{ vault_regression_username }}"
 ansible_password: "{{ vault_regression_password }}"
 ansible_network_os: junipernetworks.junos.junos
 ansible_connection: netconf
-ansible_ssh_common_args: '-o PreferredAuthentications=password'
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password'
 ansible_port: 22

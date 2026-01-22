@@ -94,14 +94,14 @@ services:
       # - /home/ubuntu/.ssh:/root/.ssh:ro    
       # - ../ansible:/ansible:ro
       - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
-      - ./mounts/output:/output
-      - ./mounts/raw_ml_data:/raw_ml_data
-      - ./mounts/tmp_semaphoreui:/tmp/semaphore
+      - ./mounts/output:/tmp/semaphore/output
+      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
+      # - ./mounts/tmp_semaphoreui:/tmp/semaphore
 
   semaphore-runner01:
     image: semaphoreui/runner:v2.16.47
     container_name: semaphore-runner01
-    user: "1000:1000"
+    # user: "1000:1000"
     environment:
       SEMAPHORE_WEB_ROOT: http://10.221.80.101:3001
       SEMAPHORE_RUNNER_TOKEN: mEuxxri3HNFgieqX3uXD5Lk2bovfHd5C9+k2MJ7uvUY=
@@ -118,8 +118,10 @@ services:
     volumes:
       - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
       - ./mounts/semaphore_runners:/etc/semaphore_runners
-      - ./mounts/tmp_semaphorerunner:/tmp/semaphore
-      - ./mounts/semaphore_runner01_home:/home/semaphore
+      - ./mounts/output:/tmp/semaphore/output
+      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
+      # - ./mounts/tmp_semaphorerunner:/tmp/semaphore
+      # - ./mounts/semaphore_runner01_home:/home/semaphore
 
 networks:
   monitoring:
