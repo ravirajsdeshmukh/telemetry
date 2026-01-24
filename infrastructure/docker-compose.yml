@@ -109,7 +109,7 @@ services:
       - all-runners
     # user: "1000:1000"
     environment:
-      SEMAPHORE_WEB_ROOT: http://10.221.80.101:3001
+      SEMAPHORE_WEB_ROOT: http://10.161.38.200:3001
       SEMAPHORE_RUNNER_TOKEN: mEuxxri3HNFgieqX3uXD5Lk2bovfHd5C9+k2MJ7uvUY=
       SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner1.key.pem
       SEMAPHORE_RUNNER_NAME: semaphore-runner01
@@ -139,8 +139,8 @@ services:
       - all-runners
     # user: "1000:1000"
     environment:
-      SEMAPHORE_WEB_ROOT: http://10.221.80.101:3001
-      SEMAPHORE_RUNNER_TOKEN: mEuxxri3HNFgieqX3uXD5Lk2bovfHd5C9+k2MJ7uvUY=
+      SEMAPHORE_WEB_ROOT: http://10.161.38.200:3001
+      SEMAPHORE_RUNNER_TOKEN: AqmxFe6YeJHoAjtIrFXQwcw3ehYlK5Gje3fNGYANkYY=
       SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner2.key.pem
       SEMAPHORE_RUNNER_NAME: semaphore-runner02
       SEMAPHORE_RUNNER_TAGS: semaphore-runner02

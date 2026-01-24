@@ -19,18 +19,17 @@
   
   tasks:
     - name: Ensure output directory exists
-      local_action:
-        module: file
+      file:
         path: "{{ output_dir }}"
         state: directory
         mode: '0777'
+      delegate_to: localhost
       run_once: true
       changed_when: false
     
     - name: Clean output directory before run
-      local_action:
-        module: shell
-        cmd: "find {{ output_dir }} -type f -delete 2>/dev/null || true"
+      shell: "find {{ output_dir }} -type f -delete 2>/dev/null || true"
+      delegate_to: localhost
       run_once: true
       changed_when: false
     
