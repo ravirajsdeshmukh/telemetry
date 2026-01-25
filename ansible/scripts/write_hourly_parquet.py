@@ -46,11 +46,12 @@ def create_hourly_partition_path(base_dir: str, dt: datetime) -> Path:
 def extract_interface_dom_metrics(device_data: Dict) -> List[Dict]:
     """
     Extract interface-level DOM metrics from optics_diagnostics data.
+    Enriches with chassis_inventory data (vendor, part_number, serial_number).
     
     Schema:
         origin_hostname, origin_name, timestamp, collection_timestamp,
         device_profile, vendor, media_type, fiber_type, if_name,
-        temperature, voltage, part_number
+        temperature, voltage, part_number, serial_number
     """
     rows = []
     
@@ -60,21 +61,36 @@ def extract_interface_dom_metrics(device_data: Dict) -> List[Dict]:
     timestamp = int(datetime.utcnow().timestamp())
     collection_timestamp = datetime.utcnow().isoformat() + 'Z'
     
+    # Build chassis inventory lookup by interface name
+    chassis_inventory = {}
+    for if_name, transceiver in device_data.get('chassis_inventory', {}).get('transceivers', {}).items():
+        chassis_inventory[if_name] = {
+            'vendor': transceiver.get('vendor', ''),
+            'part_number': transceiver.get('part_number', ''),
+            'serial_number': transceiver.get('serial_number', '')
+        }
+    
     # Process interface-level metrics from optics_diagnostics
     for interface in device_data.get('optics_diagnostics', {}).get('interfaces', []):
+        if_name = interface.get('if_name', '')
+        
+        # Use chassis inventory data if available, fallback to optics data
+        chassis_data = chassis_inventory.get(if_name, {})
+        
         row = {
             'origin_hostname': origin_hostname,
             'origin_name': origin_name,
             'timestamp': timestamp,
             'collection_timestamp': collection_timestamp,
             'device_profile': device_profile,
-            'vendor': interface.get('vendor', ''),
+            'vendor': chassis_data.get('vendor') or interface.get('vendor', ''),
             'media_type': interface.get('media_type', ''),
             'fiber_type': interface.get('fiber_type', ''),
-            'if_name': interface.get('if_name', ''),
+            'if_name': if_name,
             'temperature': interface.get('temperature'),
             'voltage': interface.get('voltage'),
-            'part_number': interface.get('part_number', '')
+            'part_number': chassis_data.get('part_number') or interface.get('part_number', ''),
+            'serial_number': chassis_data.get('serial_number', '')
         }
         rows.append(row)
     
@@ -281,6 +297,8 @@ def process_all_devices(metrics_dir: str, base_dir: str, runner_name: str, parti
                         device_data['optics_diagnostics'] = data
                     elif metric_type == 'interface_statistics':
                         device_data['interface_statistics'] = data
+                    elif metric_type == 'chassis_inventory':
+                        device_data['chassis_inventory'] = data
             
             # Extract metrics for each type
             interface_dom = extract_interface_dom_metrics(device_data)
