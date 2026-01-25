@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
 
   semaphore:
-    image: semaphoreui/semaphore:latest
+    image: semaphoreui/semaphore:v2.16.47
     container_name: semaphore
     ports:
       - "3001:3000"

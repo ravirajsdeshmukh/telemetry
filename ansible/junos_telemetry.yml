@@ -1,4 +1,21 @@
 ---
+# Initialize run timestamp before any processing
+- name: Initialize Run Timestamp
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - name: Set current UTC date and hour for this playbook run
+      set_fact:
+        run_date: "{{ lookup('pipe', 'date -u +%Y-%m-%d') }}"
+        run_hour: "{{ lookup('pipe', 'date -u +%H') }}"
+        partition_dir: "dt={{ lookup('pipe', 'date -u +%Y-%m-%d') }}/hr={{ lookup('pipe', 'date -u +%H') }}"
+        cacheable: yes
+    
+    - name: Display run timestamp
+      debug:
+        msg: "Playbook run partition: {{ partition_dir }}"
+
 - name: Collect Junos Telemetry and Export to Prometheus
   hosts: all
   connection: local
@@ -6,9 +23,6 @@
   
   vars:
     netconf_port: 830
-    # Use /output for container, ../output for host
-    # output_dir: "{{ '/output' if playbook_dir == '/ansible' else '../output' }}"
-    # raw_ml_data_dir: "{{ '/raw_ml_data' if playbook_dir == '/ansible' else '../raw_ml_data' }}"
     output_dir: "/tmp/semaphore/output"
     raw_ml_data_dir: "/tmp/semaphore/raw_ml_data"
     prometheus_pushgateway: "http://pushgateway:9091"
@@ -218,18 +232,28 @@
     output_dir: "/tmp/semaphore/output"
     raw_ml_data_dir: "/tmp/semaphore/raw_ml_data"
   tasks:
+    - name: Set runner name variable
+      set_fact:
+        runner_name: "{{ lookup('ansible.builtin.env', 'SEMAPHORE_RUNNER_NAME') | default('', true) }}"
+    
+    - name: Fail if runner name is not set
+      fail:
+        msg: "SEMAPHORE_RUNNER_NAME environment variable must be set"
+      when: runner_name == ''
+    
     - name: Write aggregated hourly Parquet files (interface_dom, lane_dom, interface_counters)
       script: >
         scripts/write_hourly_parquet.py
         --metrics-dir "{{ output_dir }}"
         --base-dir "{{ raw_ml_data_dir }}"
+        --runner-name "{{ runner_name }}"
+        --partition-dir "{{ hostvars['localhost']['partition_dir'] }}"
         --compression snappy
       args:
         executable: python3
         chdir: "{{ playbook_dir }}"
       environment:
         PYTHONPATH: "{{ playbook_dir }}"
-        SEMAPHORE_RUNNER_NAME: "{{ lookup('env', 'SEMAPHORE_RUNNER_NAME') | default('local', true) }}"
       register: hourly_parquet_result
     
     - name: Display hourly Parquet results
@@ -237,11 +261,11 @@
         msg: "{{ hourly_parquet_result.stdout_lines }}"
       when: hourly_parquet_result.stdout_lines is defined
 
-    - name: Sync raw_ml_data to S3 datalake (today's data only)
+    - name: Sync current hour data to S3 datalake
       community.aws.s3_sync:
         bucket: amzn-ds-s3-rrd
-        file_root: "{{ raw_ml_data_dir }}/dt={{ lookup('pipe', 'date -u +%Y-%m-%d') }}"
-        key_prefix: "datalake/dt={{ lookup('pipe', 'date -u +%Y-%m-%d') }}/"
+        file_root: "{{ raw_ml_data_dir }}/{{ hostvars['localhost']['partition_dir'] }}"
+        key_prefix: "datalake/{{ hostvars['localhost']['partition_dir'] }}/"
         region: us-east-1
       environment:
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"

@@ -201,13 +201,15 @@ def write_parquet_file(rows: List[Dict], file_path: Path, compression: str = 'sn
     print(f"Wrote {len(rows)} rows to {file_path}")
 
 
-def process_all_devices(metrics_dir: str, base_dir: str, compression: str = 'snappy'):
+def process_all_devices(metrics_dir: str, base_dir: str, runner_name: str, partition_dir: str = None, compression: str = 'snappy'):
     """
     Process all device metrics and write to 3 hourly Parquet files.
     
     Args:
         metrics_dir: Directory containing *_metrics_with_metadata.json files
         base_dir: Base directory for parquet storage
+        runner_name: Semaphore runner name to include in filenames
+        partition_dir: Hourly partition directory (e.g., 'dt=2026-01-25/hr=06'), if None will use current UTC time
         compression: Compression algorithm
     """
     all_interface_dom = []
@@ -299,26 +301,27 @@ def process_all_devices(metrics_dir: str, base_dir: str, compression: str = 'sna
             traceback.print_exc()
             continue
     
-    # Create hourly partition path based on UTC time
-    now_utc = datetime.utcnow()
-    partition_dir = create_hourly_partition_path(base_dir, now_utc)
+    # Use provided partition directory or create from current UTC time
+    if partition_dir:
+        partition_path = Path(base_dir) / partition_dir
+        partition_path.mkdir(parents=True, exist_ok=True)
+    else:
+        now_utc = datetime.utcnow()
+        partition_path = create_hourly_partition_path(base_dir, now_utc)
     
     # Generate timestamp suffix for filenames to avoid overwriting
-    timestamp_str = now_utc.strftime('%Y%m%d_%H%M%S')
+    timestamp_str = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
     
-    print(f"\nWriting hourly Parquet files to {partition_dir}...")
+    print(f"\nWriting hourly Parquet files to {partition_path}...")
     
     # Create separate subdirectories for each metric type
-    intf_dom_dir = partition_dir / 'intf-dom'
-    lane_dom_dir = partition_dir / 'lane-dom'
-    intf_counters_dir = partition_dir / 'intf-counters'
+    intf_dom_dir = partition_path / 'intf-dom'
+    lane_dom_dir = partition_path / 'lane-dom'
+    intf_counters_dir = partition_path / 'intf-counters'
     
     intf_dom_dir.mkdir(exist_ok=True)
     lane_dom_dir.mkdir(exist_ok=True)
     intf_counters_dir.mkdir(exist_ok=True)
-    
-    # Get runner name from environment variable
-    runner_name = os.environ.get('SEMAPHORE_RUNNER_NAME', 'unknown')
     
     # Write 3 Parquet files to their respective directories with timestamps and runner name
     write_parquet_file(
@@ -353,14 +356,27 @@ def main():
                        help='Directory containing *_metrics_with_metadata.json files')
     parser.add_argument('--base-dir', required=True,
                        help='Base directory for parquet storage (e.g., output/ml_data)')
+    parser.add_argument('--runner-name', required=True,
+                       help='Semaphore runner name (must be set)')
+    parser.add_argument('--partition-dir', required=False,
+                       help='Hourly partition directory relative to base-dir (e.g., dt=2026-01-25/hr=06)')
     parser.add_argument('--compression', default='snappy',
                        choices=['snappy', 'gzip', 'brotli', 'none'],
                        help='Compression algorithm')
     
     args = parser.parse_args()
     
+    if not args.runner_name or args.runner_name.strip() == '':
+        raise ValueError("SEMAPHORE_RUNNER_NAME must be set and cannot be empty")
+    
     try:
-        process_all_devices(args.metrics_dir, args.base_dir, args.compression)
+        process_all_devices(
+            args.metrics_dir, 
+            args.base_dir, 
+            args.runner_name, 
+            args.partition_dir,
+            args.compression
+        )
         print("\nSuccessfully wrote hourly Parquet files!")
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
