@@ -42,7 +42,7 @@ all:
         dcf-hill7-evo.englab.juniper.net:
         dcf-hill9-evo.englab.juniper.net:
         dcf-hill10-evo.englab.juniper.net:
-        dcf-sap6-evo.englab.juniper.net:
+        # dcf-sap6-evo.englab.juniper.net:
         dcf-glen5-evo.englab.juniper.net:
         dcf-glen6-evo.englab.juniper.net:
         dcf-glen7-evo.englab.juniper.net:
