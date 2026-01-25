@@ -1,6 +1,6 @@
 ---
 collections:
-  - name: junipernetworks.junos
-    version: "==9.1.0"
+  # - name: junipernetworks.junos
+  #   version: "==9.1.0"
   - name: community.aws
     version: ">=6.0.0"
