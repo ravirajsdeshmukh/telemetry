@@ -116,6 +116,7 @@ services:
       SEMAPHORE_RUNNER_TAGS: semaphore-runner01
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       HOME: /home/semaphore
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
     networks:
       - monitoring
     restart: unless-stopped
@@ -125,7 +126,7 @@ services:
       - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
       - ./mounts/semaphore_runners:/etc/semaphore_runners
       - ./mounts/output:/tmp/semaphore/output
-      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
+      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
       # - ./mounts/tmp_semaphorerunner:/tmp/semaphore
       # - ./mounts/semaphore_runner01_home:/home/semaphore
 
@@ -146,6 +147,7 @@ services:
       SEMAPHORE_RUNNER_TAGS: semaphore-runner02
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       HOME: /home/semaphore
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
     networks:
       - monitoring
     restart: unless-stopped
@@ -155,7 +157,7 @@ services:
       - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
       - ./mounts/semaphore_runners:/etc/semaphore_runners
       - ./mounts/output:/tmp/semaphore/output
-      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
+      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
       # - ./mounts/tmp_semaphorerunner02:/tmp/semaphore
       # - ./mounts/semaphore_runner02_home:/home/semaphore
 
