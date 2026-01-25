@@ -7,6 +7,7 @@
   tasks:
     - name: Set current UTC date and hour for this playbook run
       set_fact:
+        run_timestamp: "{{ lookup('pipe', 'date -u +%s') | int }}"
         run_date: "{{ lookup('pipe', 'date -u +%Y-%m-%d') }}"
         run_hour: "{{ lookup('pipe', 'date -u +%H') }}"
         partition_dir: "dt={{ lookup('pipe', 'date -u +%Y-%m-%d') }}/hr={{ lookup('pipe', 'date -u +%H') }}"
@@ -252,6 +253,7 @@
         --base-dir "{{ raw_ml_data_dir }}"
         --runner-name "{{ runner_name }}"
         --partition-dir "{{ hostvars['localhost']['partition_dir'] }}"
+        --run-timestamp "{{ hostvars['localhost']['run_timestamp'] }}"
         --compression snappy
       args:
         executable: python3

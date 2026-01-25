@@ -23,6 +23,10 @@ except ImportError:
     print("Error: Required packages not installed. Run: pip install pyarrow pandas", file=sys.stderr)
     sys.exit(1)
 
+# Import interface mapping utilities
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from parsers.common.interface_mapping import parse_interface_base_name
+
 
 def create_hourly_partition_path(base_dir: str, dt: datetime) -> Path:
     """
@@ -43,7 +47,7 @@ def create_hourly_partition_path(base_dir: str, dt: datetime) -> Path:
     return partition_path
 
 
-def extract_interface_dom_metrics(device_data: Dict) -> List[Dict]:
+def extract_interface_dom_metrics(device_data: Dict, run_timestamp: int = None) -> List[Dict]:
     """
     Extract interface-level DOM metrics from optics_diagnostics data.
     Enriches with chassis_inventory data (vendor, part_number, serial_number).
@@ -58,8 +62,8 @@ def extract_interface_dom_metrics(device_data: Dict) -> List[Dict]:
     origin_hostname = device_data.get('origin_hostname', '')
     origin_name = device_data.get('origin_name', origin_hostname)
     device_profile = device_data.get('device_profile', '')
-    timestamp = int(datetime.utcnow().timestamp())
-    collection_timestamp = datetime.utcnow().isoformat() + 'Z'
+    timestamp = run_timestamp if run_timestamp else int(datetime.utcnow().timestamp())
+    collection_timestamp = datetime.utcfromtimestamp(timestamp).isoformat() + 'Z'
     
     # Build chassis inventory lookup by interface name
     chassis_inventory = {}
@@ -74,8 +78,14 @@ def extract_interface_dom_metrics(device_data: Dict) -> List[Dict]:
     for interface in device_data.get('optics_diagnostics', {}).get('interfaces', []):
         if_name = interface.get('if_name', '')
         
+        if not if_name:
+            raise ValueError("Interface name missing in optics_diagnostics data")
+
+        # Strip channelization suffix (e.g., et-0/0/0:1 -> et-0/0/0) for chassis lookup
+        parent_if_name = parse_interface_base_name(if_name)
+        
         # Use chassis inventory data if available, fallback to optics data
-        chassis_data = chassis_inventory.get(if_name, {})
+        chassis_data = chassis_inventory.get(parent_if_name, {})
         
         row = {
             'origin_hostname': origin_hostname,
@@ -97,7 +107,7 @@ def extract_interface_dom_metrics(device_data: Dict) -> List[Dict]:
     return rows
 
 
-def extract_lane_dom_metrics(device_data: Dict) -> List[Dict]:
+def extract_lane_dom_metrics(device_data: Dict, run_timestamp: int = None) -> List[Dict]:
     """
     Extract lane-level DOM metrics from optics_diagnostics data.
     
@@ -109,28 +119,42 @@ def extract_lane_dom_metrics(device_data: Dict) -> List[Dict]:
     
     origin_hostname = device_data.get('origin_hostname', '')
     origin_name = device_data.get('origin_name', origin_hostname)
-    timestamp = int(datetime.utcnow().timestamp())
-    collection_timestamp = datetime.utcnow().isoformat() + 'Z'
+    timestamp = run_timestamp if run_timestamp else int(datetime.utcnow().timestamp())
+    collection_timestamp = datetime.utcfromtimestamp(timestamp).isoformat() + 'Z'
     
     # Process lane-level metrics from optics_diagnostics
     for lane in device_data.get('optics_diagnostics', {}).get('lanes', []):
+        if_name = lane.get('if_name', '')
+        lane_id = lane.get('lane')
+        tx_bias = lane.get('tx_bias')
+        tx_power = lane.get('tx_power')
+        rx_power = lane.get('rx_power')
+        
+        if (not if_name or 
+            not isinstance(lane_id, int) or 
+            not isinstance(tx_bias, (int, float)) or 
+            not isinstance(tx_power, (int, float)) or 
+            not isinstance(rx_power, (int, float))):
+            raise ValueError("Invalid lane DOM data in optics_diagnostics - if_name: %s, lane: %s (int), tx_bias: %s (float), "
+                           "tx_power: %s (float), rx_power: %s (float)" % (if_name, lane_id, tx_bias, tx_power, rx_power))
+
         row = {
             'origin_hostname': origin_hostname,
             'origin_name': origin_name,
             'timestamp': timestamp,
             'collection_timestamp': collection_timestamp,
-            'if_name': lane.get('if_name', ''),
-            'lane': lane.get('lane'),
-            'tx_bias': lane.get('tx_bias'),
-            'tx_power': lane.get('tx_power'),
-            'rx_power': lane.get('rx_power')
+            'if_name': if_name,
+            'lane': lane_id,
+            'tx_bias': tx_bias,
+            'tx_power': tx_power,
+            'rx_power': rx_power
         }
         rows.append(row)
     
     return rows
 
 
-def extract_interface_counters(device_data: Dict) -> List[Dict]:
+def extract_interface_counters(device_data: Dict, run_timestamp: int = None) -> List[Dict]:
     """
     Extract interface counter metrics from interface_statistics data.
     
@@ -144,8 +168,8 @@ def extract_interface_counters(device_data: Dict) -> List[Dict]:
     
     origin_hostname = device_data.get('origin_hostname', '')
     origin_name = device_data.get('origin_name', origin_hostname)
-    timestamp = int(datetime.utcnow().timestamp())
-    collection_timestamp = datetime.utcnow().isoformat() + 'Z'
+    timestamp = run_timestamp if run_timestamp else int(datetime.utcnow().timestamp())
+    collection_timestamp = datetime.utcfromtimestamp(timestamp).isoformat() + 'Z'
     
     # Process interface statistics
     for interface in device_data.get('interface_statistics', {}).get('interfaces', []):
@@ -217,7 +241,7 @@ def write_parquet_file(rows: List[Dict], file_path: Path, compression: str = 'sn
     print(f"Wrote {len(rows)} rows to {file_path}")
 
 
-def process_all_devices(metrics_dir: str, base_dir: str, runner_name: str, partition_dir: str = None, compression: str = 'snappy'):
+def process_all_devices(metrics_dir: str, base_dir: str, runner_name: str, partition_dir: str = None, run_timestamp: int = None, compression: str = 'snappy'):
     """
     Process all device metrics and write to 3 hourly Parquet files.
     
@@ -226,6 +250,7 @@ def process_all_devices(metrics_dir: str, base_dir: str, runner_name: str, parti
         base_dir: Base directory for parquet storage
         runner_name: Semaphore runner name to include in filenames
         partition_dir: Hourly partition directory (e.g., 'dt=2026-01-25/hr=06'), if None will use current UTC time
+        run_timestamp: Unix timestamp for this playbook run, if None will use current UTC time
         compression: Compression algorithm
     """
     all_interface_dom = []
@@ -301,9 +326,9 @@ def process_all_devices(metrics_dir: str, base_dir: str, runner_name: str, parti
                         device_data['chassis_inventory'] = data
             
             # Extract metrics for each type
-            interface_dom = extract_interface_dom_metrics(device_data)
-            lane_dom = extract_lane_dom_metrics(device_data)
-            interface_counters = extract_interface_counters(device_data)
+            interface_dom = extract_interface_dom_metrics(device_data, run_timestamp)
+            lane_dom = extract_lane_dom_metrics(device_data, run_timestamp)
+            interface_counters = extract_interface_counters(device_data, run_timestamp)
             
             all_interface_dom.extend(interface_dom)
             all_lane_dom.extend(lane_dom)
@@ -378,6 +403,8 @@ def main():
                        help='Semaphore runner name (must be set)')
     parser.add_argument('--partition-dir', required=False,
                        help='Hourly partition directory relative to base-dir (e.g., dt=2026-01-25/hr=06)')
+    parser.add_argument('--run-timestamp', type=int, required=False,
+                       help='Unix timestamp for this playbook run (if not provided, current time will be used)')
     parser.add_argument('--compression', default='snappy',
                        choices=['snappy', 'gzip', 'brotli', 'none'],
                        help='Compression algorithm')
@@ -393,6 +420,7 @@ def main():
             args.base_dir, 
             args.runner_name, 
             args.partition_dir,
+            args.run_timestamp,
             args.compression
         )
         print("\nSuccessfully wrote hourly Parquet files!")
