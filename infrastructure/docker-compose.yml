@@ -84,6 +84,8 @@ services:
       SEMAPHORE_USE_REMOTE_RUNNER: 'true'
       SEMAPHORE_RUNNER_REGISTRATION_TOKEN: runnertoken12345
       SEMAPHORE_TMP_PATH: /tmp/semaphore
+      SEMAPHORE_RUNNER_NAME: semaphore-ui
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
     networks:
       - monitoring
     restart: unless-stopped
@@ -91,13 +93,9 @@ services:
       - postgres
     volumes:
       - ./mounts/semaphore_runners:/etc/semaphore_runners
-      # - /home/ubuntu/.ssh:/root/.ssh:ro    
-      # - ../ansible:/ansible:ro
       - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
       - ./mounts/output:/tmp/semaphore/output
       - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
-      # - ./mounts/tmp_semaphoreui:/tmp/semaphore
-
 
   # To start all core services and runner01
   # docker compose --profile runner01 up -d
@@ -127,8 +125,6 @@ services:
       - ./mounts/semaphore_runners:/etc/semaphore_runners
       - ./mounts/output:/tmp/semaphore/output
       - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
-      # - ./mounts/tmp_semaphorerunner:/tmp/semaphore
-      # - ./mounts/semaphore_runner01_home:/home/semaphore
 
   # To start all core services and runner02
   # docker compose --profile runner02 up -d
@@ -158,8 +154,6 @@ services:
       - ./mounts/semaphore_runners:/etc/semaphore_runners
       - ./mounts/output:/tmp/semaphore/output
       - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
-      # - ./mounts/tmp_semaphorerunner02:/tmp/semaphore
-      # - ./mounts/semaphore_runner02_home:/home/semaphore
 
 networks:
   monitoring:
