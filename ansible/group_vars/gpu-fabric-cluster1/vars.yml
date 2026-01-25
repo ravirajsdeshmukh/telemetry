@@ -1,0 +1,9 @@
+---
+# Regression group variable references
+ansible_user: "{{ vault_gpu_fabric_cluster1_username }}"
+ansible_password: "{{ vault_gpu_fabric_cluster1_password }}"
+ansible_network_os: junipernetworks.junos.junos
+ansible_connection: netconf
+ansible_host_key_checking: false
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password'
+ansible_port: 830

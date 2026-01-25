@@ -98,9 +98,15 @@ services:
       - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
       # - ./mounts/tmp_semaphoreui:/tmp/semaphore
 
+
+  # To start all core services and runner01
+  # docker compose --profile runner01 up -d
   semaphore-runner01:
     image: semaphoreui/runner:v2.16.47
     container_name: semaphore-runner01
+    profiles:
+      - runner01
+      - all-runners
     # user: "1000:1000"
     environment:
       SEMAPHORE_WEB_ROOT: http://10.221.80.101:3001
@@ -122,6 +128,36 @@ services:
       - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
       # - ./mounts/tmp_semaphorerunner:/tmp/semaphore
       # - ./mounts/semaphore_runner01_home:/home/semaphore
+
+  # To start all core services and runner02
+  # docker compose --profile runner02 up -d
+  semaphore-runner02:
+    image: semaphoreui/runner:v2.16.47
+    container_name: semaphore-runner02
+    profiles:
+      - runner02
+      - all-runners
+    # user: "1000:1000"
+    environment:
+      SEMAPHORE_WEB_ROOT: http://10.161.38.200:3001
+      SEMAPHORE_RUNNER_TOKEN: AqmxFe6YeJHoAjtIrFXQwcw3ehYlK5Gje3fNGYANkYY=
+      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner2.key.pem
+      SEMAPHORE_RUNNER_NAME: semaphore-runner02
+      SEMAPHORE_RUNNER_TAGS: semaphore-runner02
+      ANSIBLE_HOST_KEY_CHECKING: 'false'
+      HOME: /home/semaphore
+    networks:
+      - monitoring
+    restart: unless-stopped
+    depends_on:
+      - semaphore
+    volumes:
+      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
+      - ./mounts/semaphore_runners:/etc/semaphore_runners
+      - ./mounts/output:/tmp/semaphore/output
+      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
+      # - ./mounts/tmp_semaphorerunner02:/tmp/semaphore
+      # - ./mounts/semaphore_runner02_home:/home/semaphore
 
 networks:
   monitoring:
