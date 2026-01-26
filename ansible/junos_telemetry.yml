@@ -278,7 +278,6 @@
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
         AWS_SESSION_TOKEN: "{{ aws_session_token | default('') }}"
       register: s3_sync_result
-      ignore_errors: yes
       when: aws_access_key_id is defined and aws_secret_access_key is defined
 
     - name: Display S3 sync result
