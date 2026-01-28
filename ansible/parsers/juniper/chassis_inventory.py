@@ -107,10 +107,17 @@ def parse_chassis_inventory(xml_content: str, device: str, platform_hint: Option
                     fpc_num, pic_num, xcvr_num, platform_hint
                 )
                 
-                # Only track that this interface exists (no metadata)
-                # All transceiver metadata comes from PIC detail command
+                # Extract serial number from chassis inventory
+                # (PIC detail doesn't provide serial numbers)
+                serial_number = findtext_ns(xcvr_elem, 'serial-number')
+                
+                # Only track that this interface exists with serial number
+                # Other transceiver metadata comes from PIC detail command
                 if interface_name:
-                    result['transceivers'][interface_name] = {}
+                    transceiver_data = {}
+                    if serial_number and serial_number not in ['N/A', 'BUILTIN', '']:
+                        transceiver_data['serial_number'] = serial_number
+                    result['transceivers'][interface_name] = transceiver_data
     
     return result
 

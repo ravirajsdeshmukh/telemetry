@@ -60,8 +60,9 @@ def merge_metadata(system_info: Dict, chassis_inv: Dict, optics_metrics: Dict, p
         base_if_name = parse_interface_base_name(if_name) if if_name else None
         
         if base_if_name:
-            # All transceiver metadata comes from PIC detail ONLY
-            # Chassis inventory only provides FPC/PIC structure for interface naming
+            # Merge transceiver metadata from PIC detail and chassis inventory
+            # PIC detail has vendor, part_number, etc. but not serial_number
+            # Chassis inventory has serial_number
             if base_if_name in pic_transceivers:
                 pic_data = pic_transceivers[base_if_name]
                 # All transceiver metadata from PIC detail
@@ -81,6 +82,12 @@ def merge_metadata(system_info: Dict, chassis_inv: Dict, optics_metrics: Dict, p
                     interface['fiber_type'] = pic_data['fiber_type']
                 if pic_data.get('firmware_version'):
                     interface['firmware_version'] = pic_data['firmware_version']
+            
+            # Get serial_number from chassis inventory if not already set
+            if 'serial_number' not in interface and base_if_name in transceivers:
+                chassis_data = transceivers[base_if_name]
+                if chassis_data.get('serial_number'):
+                    interface['serial_number'] = chassis_data['serial_number']
     
     # Update lane metrics
     for lane in optics_metrics.get('lanes', []):
@@ -100,8 +107,9 @@ def merge_metadata(system_info: Dict, chassis_inv: Dict, optics_metrics: Dict, p
         base_if_name = parse_interface_base_name(if_name) if if_name else None
         
         if base_if_name:
-            # All transceiver metadata comes from PIC detail ONLY
-            # Chassis inventory only provides FPC/PIC structure for interface naming
+            # Merge transceiver metadata from PIC detail and chassis inventory
+            # PIC detail has vendor, part_number, etc. but not serial_number
+            # Chassis inventory has serial_number
             if base_if_name in pic_transceivers:
                 pic_data = pic_transceivers[base_if_name]
                 # All transceiver metadata from PIC detail
@@ -121,6 +129,12 @@ def merge_metadata(system_info: Dict, chassis_inv: Dict, optics_metrics: Dict, p
                     lane['fiber_type'] = pic_data['fiber_type']
                 if pic_data.get('firmware_version'):
                     lane['firmware_version'] = pic_data['firmware_version']
+            
+            # Get serial_number from chassis inventory if not already set
+            if 'serial_number' not in lane and base_if_name in transceivers:
+                chassis_data = transceivers[base_if_name]
+                if chassis_data.get('serial_number'):
+                    lane['serial_number'] = chassis_data['serial_number']
     
     return optics_metrics
 
