@@ -33,7 +33,9 @@ def merge_metadata(system_info: Dict, chassis_inv: Dict, optics_metrics: Dict, p
     # Extract system-level metadata
     origin_hostname = system_info.get('origin_hostname')
     device_profile = system_info.get('device_profile')
-    origin_name = chassis_inv.get('origin_name')  # Device serial number
+    device_serial = chassis_inv.get('origin_name')  # Device serial number
+    # Use device FQDN for origin_name (passed from Ansible inventory_hostname)
+    origin_name = system_info.get('device')  # This is the FQDN from Ansible
     transceivers = chassis_inv.get('transceivers', {})
     
     # Get PIC detail transceivers (higher priority for vendor info)
@@ -50,6 +52,8 @@ def merge_metadata(system_info: Dict, chassis_inv: Dict, optics_metrics: Dict, p
             interface['device_profile'] = device_profile
         if origin_name:
             interface['origin_name'] = origin_name
+        if device_serial:
+            interface['device_serial'] = device_serial
         
         # Add transceiver metadata
         # Extract base interface name (remove :N suffix for channelized interfaces)
@@ -89,6 +93,8 @@ def merge_metadata(system_info: Dict, chassis_inv: Dict, optics_metrics: Dict, p
             lane['device_profile'] = device_profile
         if origin_name:
             lane['origin_name'] = origin_name
+        if device_serial:
+            lane['device_serial'] = device_serial
         
         # Add transceiver metadata
         base_if_name = parse_interface_base_name(if_name) if if_name else None
