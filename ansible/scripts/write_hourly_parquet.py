@@ -57,14 +57,15 @@ def extract_interface_dom_metrics(device_data: Dict, run_timestamp: int = None) 
     Chassis inventory description is NOT a reliable source for vendor name.
     
     Schema:
-        origin_hostname, origin_name, timestamp, collection_timestamp,
+        origin_hostname, origin_name, inventory_instance, timestamp, collection_timestamp,
         device_profile, vendor, media_type, fiber_type, if_name,
         temperature, voltage, part_number, serial_number
     """
     rows = []
     
     origin_hostname = device_data.get('origin_hostname', '')
-    origin_name = device_data.get('origin_name', origin_hostname)
+    origin_name = device_data.get('origin_name', '')
+    inventory_instance = device_data.get('inventory_instance', '')
     device_profile = device_data.get('device_profile', '')
     timestamp = run_timestamp if run_timestamp else int(datetime.utcnow().timestamp())
     collection_timestamp = datetime.utcfromtimestamp(timestamp).isoformat() + 'Z'
@@ -93,6 +94,7 @@ def extract_interface_dom_metrics(device_data: Dict, run_timestamp: int = None) 
         row = {
             'origin_hostname': origin_hostname,
             'origin_name': origin_name,
+            'inventory_instance': inventory_instance,
             'timestamp': timestamp,
             'collection_timestamp': collection_timestamp,
             'device_profile': device_profile,
@@ -115,13 +117,14 @@ def extract_lane_dom_metrics(device_data: Dict, run_timestamp: int = None) -> Li
     Extract lane-level DOM metrics from optics_diagnostics data.
     
     Schema:
-        origin_hostname, origin_name, timestamp, collection_timestamp,
+        origin_hostname, origin_name, inventory_instance, timestamp, collection_timestamp,
         if_name, lane, tx_bias, tx_power, rx_power
     """
     rows = []
     
     origin_hostname = device_data.get('origin_hostname', '')
-    origin_name = device_data.get('origin_name', origin_hostname)
+    origin_name = device_data.get('origin_name', '')
+    inventory_instance = device_data.get('inventory_instance', '')
     timestamp = run_timestamp if run_timestamp else int(datetime.utcnow().timestamp())
     collection_timestamp = datetime.utcfromtimestamp(timestamp).isoformat() + 'Z'
     
@@ -144,6 +147,7 @@ def extract_lane_dom_metrics(device_data: Dict, run_timestamp: int = None) -> Li
         row = {
             'origin_hostname': origin_hostname,
             'origin_name': origin_name,
+            'inventory_instance': inventory_instance,
             'timestamp': timestamp,
             'collection_timestamp': collection_timestamp,
             'if_name': if_name,
@@ -162,7 +166,7 @@ def extract_interface_counters(device_data: Dict, run_timestamp: int = None) -> 
     Extract interface counter metrics from interface_statistics data.
     
     Schema:
-        origin_hostname, origin_name, timestamp, collection_timestamp,
+        origin_hostname, origin_name, inventory_instance, timestamp, collection_timestamp,
         if_name, admin_status, oper_status, speed_bps,
         input_bps, input_pps, output_bps, output_pps,
         fec_ccw, fec_nccw, fec_ccw_error_rate, fec_nccw_error_rate, pre_fec_ber
@@ -170,7 +174,8 @@ def extract_interface_counters(device_data: Dict, run_timestamp: int = None) -> 
     rows = []
     
     origin_hostname = device_data.get('origin_hostname', '')
-    origin_name = device_data.get('origin_name', origin_hostname)
+    origin_name = device_data.get('origin_name', '')
+    inventory_instance = device_data.get('inventory_instance', '')
     timestamp = run_timestamp if run_timestamp else int(datetime.utcnow().timestamp())
     collection_timestamp = datetime.utcfromtimestamp(timestamp).isoformat() + 'Z'
     
@@ -179,6 +184,7 @@ def extract_interface_counters(device_data: Dict, run_timestamp: int = None) -> 
         row = {
             'origin_hostname': origin_hostname,
             'origin_name': origin_name,
+            'inventory_instance': inventory_instance,
             'timestamp': timestamp,
             'collection_timestamp': collection_timestamp,
             'if_name': interface.get('if_name', ''),
@@ -217,7 +223,7 @@ def write_parquet_file(rows: List[Dict], file_path: Path, compression: str = 'sn
     df = pd.DataFrame(rows)
     
     # Ensure string columns remain as strings (not dictionary-encoded)
-    string_columns = ['origin_hostname', 'origin_name', 'collection_timestamp',
+    string_columns = ['origin_hostname', 'origin_name', 'inventory_instance', 'collection_timestamp',
                      'device_profile', 'vendor', 'media_type', 'fiber_type',
                      'if_name', 'part_number', 'admin_status', 'oper_status']
     for col in string_columns:
@@ -321,12 +327,17 @@ def process_all_devices(metrics_dir: str, base_dir: str, runner_name: str, parti
                     data = json.load(f)
                     if metric_type == 'system_information':
                         device_data.update(data)
+                        # Set inventory_instance from device field (FQDN from inventory)
+                        device_data['inventory_instance'] = data.get('device', device)
                     elif metric_type == 'optics_diagnostics':
                         device_data['optics_diagnostics'] = data
                     elif metric_type == 'interface_statistics':
                         device_data['interface_statistics'] = data
                     elif metric_type == 'chassis_inventory':
                         device_data['chassis_inventory'] = data
+                        # Merge top-level fields like origin_name (device serial number)
+                        if 'origin_name' in data:
+                            device_data['origin_name'] = data['origin_name']
             
             # Extract metrics for each type
             interface_dom = extract_interface_dom_metrics(device_data, run_timestamp)
