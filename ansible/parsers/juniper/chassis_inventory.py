@@ -19,50 +19,16 @@ import os
 # sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from parsers.common.xml_utils import strip_namespace, findtext_ns, findall_ns, findall_recursive_ns
-from parsers.common.fiber_detection import determine_fiber_type
 from parsers.common.interface_mapping import parse_juniper_interface_name, extract_fpc_pic_port
-
-
-def parse_transceiver_vendor_info(description: Optional[str]) -> Dict[str, Optional[str]]:
-    """
-    Parse vendor and media type from transceiver description.
-    
-    Args:
-        description: Description string (e.g., "JUNIPER QFX-QSFP-100G-SR4")
-    
-    Returns:
-        Dictionary with vendor and media_type
-    """
-    result = {'vendor': None, 'media_type': None}
-    
-    if not description:
-        return result
-    
-    # Split description into tokens
-    parts = description.split()
-    if not parts:
-        return result
-    
-    # First token is usually vendor
-    result['vendor'] = parts[0]
-    
-    # Try to extract media type (look for patterns like "100G-SR4", "10GBASE-LR", etc.)
-    for part in parts:
-        part_upper = part.upper()
-        # Look for common media type indicators
-        if any(indicator in part_upper for indicator in ['BASE', 'SR', 'LR', 'ER', 'ZR', 'SX', 'LX']):
-            result['media_type'] = part
-            break
-        # Look for speed indicators (10G, 40G, 100G, 400G)
-        if re.search(r'\d+G', part_upper):
-            result['media_type'] = part
-    
-    return result
 
 
 def parse_chassis_inventory(xml_content: str, device: str, platform_hint: Optional[str] = None) -> Dict:
     """
-    Parse chassis inventory XML and extract device and transceiver metadata.
+    Parse chassis inventory XML to extract device serial and identify FPC/PIC structure.
+    
+    NOTE: This parser ONLY extracts FPC/PIC information for interface naming.
+    All transceiver metadata (vendor, part_number, serial_number, media_type, fiber_type, wavelength)
+    MUST come from PIC detail command (show chassis pic fpc-slot X pic-slot Y).
     
     Args:
         xml_content: XML string from get-chassis-inventory RPC response
@@ -73,7 +39,7 @@ def parse_chassis_inventory(xml_content: str, device: str, platform_hint: Option
         Dictionary with:
         - device: Device identifier
         - origin_name: Device serial number
-        - transceivers: Dict mapping interface names to transceiver metadata
+        - transceivers: Dict mapping interface names (for structure only, no metadata)
     """
     try:
         root = ET.fromstring(xml_content)
@@ -136,35 +102,15 @@ def parse_chassis_inventory(xml_content: str, device: str, platform_hint: Option
                     continue
                 xcvr_num = xcvr_info['number']
                 
-                # Extract transceiver metadata
-                part_number = findtext_ns(xcvr_elem, 'part-number')
-                serial_number = findtext_ns(xcvr_elem, 'serial-number')
-                description = findtext_ns(xcvr_elem, 'description')
-                
-                # Parse vendor and media type from description
-                vendor_info = parse_transceiver_vendor_info(description)
-                
-                # Determine fiber type
-                fiber_type = determine_fiber_type(
-                    media_type=vendor_info['media_type'],
-                    description=description
-                )
-                
                 # Map to interface name
                 interface_name = parse_juniper_interface_name(
                     fpc_num, pic_num, xcvr_num, platform_hint
                 )
                 
-                # Store transceiver metadata
+                # Only track that this interface exists (no metadata)
+                # All transceiver metadata comes from PIC detail command
                 if interface_name:
-                    result['transceivers'][interface_name] = {
-                        'vendor': vendor_info['vendor'],
-                        'part_number': part_number,
-                        'serial_number': serial_number,
-                        'description': description,
-                        'media_type': vendor_info['media_type'],
-                        'fiber_type': fiber_type
-                    }
+                    result['transceivers'][interface_name] = {}
     
     return result
 

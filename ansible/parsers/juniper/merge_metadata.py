@@ -56,29 +56,17 @@ def merge_metadata(system_info: Dict, chassis_inv: Dict, optics_metrics: Dict, p
         base_if_name = parse_interface_base_name(if_name) if if_name else None
         
         if base_if_name:
-            # First, try chassis inventory for basic metadata
-            if base_if_name in transceivers:
-                xcvr_data = transceivers[base_if_name]
-                if xcvr_data.get('part_number'):
-                    interface['part_number'] = xcvr_data['part_number']
-                if xcvr_data.get('serial_number'):
-                    interface['serial_number'] = xcvr_data['serial_number']
-                # Use chassis data as fallback for vendor and media_type
-                if xcvr_data.get('vendor'):
-                    interface['vendor'] = xcvr_data['vendor']
-                if xcvr_data.get('media_type'):
-                    interface['media_type'] = xcvr_data['media_type']
-                if xcvr_data.get('fiber_type'):
-                    interface['fiber_type'] = xcvr_data['fiber_type']
-            
-            # Then, override with PIC detail data if available (more detailed)
+            # All transceiver metadata comes from PIC detail ONLY
+            # Chassis inventory only provides FPC/PIC structure for interface naming
             if base_if_name in pic_transceivers:
                 pic_data = pic_transceivers[base_if_name]
-                # PIC detail has priority for vendor info
+                # All transceiver metadata from PIC detail
                 if pic_data.get('vendor'):
                     interface['vendor'] = pic_data['vendor']
                 if pic_data.get('part_number'):
                     interface['part_number'] = pic_data['part_number']
+                if pic_data.get('serial_number'):
+                    interface['serial_number'] = pic_data['serial_number']
                 if pic_data.get('cable_type'):
                     interface['cable_type'] = pic_data['cable_type']
                 if pic_data.get('media_type'):
@@ -106,29 +94,17 @@ def merge_metadata(system_info: Dict, chassis_inv: Dict, optics_metrics: Dict, p
         base_if_name = parse_interface_base_name(if_name) if if_name else None
         
         if base_if_name:
-            # First, try chassis inventory for basic metadata
-            if base_if_name in transceivers:
-                xcvr_data = transceivers[base_if_name]
-                if xcvr_data.get('part_number'):
-                    lane['part_number'] = xcvr_data['part_number']
-                if xcvr_data.get('serial_number'):
-                    lane['serial_number'] = xcvr_data['serial_number']
-                # Use chassis data as fallback
-                if xcvr_data.get('vendor'):
-                    lane['vendor'] = xcvr_data['vendor']
-                if xcvr_data.get('media_type'):
-                    lane['media_type'] = xcvr_data['media_type']
-                if xcvr_data.get('fiber_type'):
-                    lane['fiber_type'] = xcvr_data['fiber_type']
-            
-            # Then, override with PIC detail data if available (more detailed)
+            # All transceiver metadata comes from PIC detail ONLY
+            # Chassis inventory only provides FPC/PIC structure for interface naming
             if base_if_name in pic_transceivers:
                 pic_data = pic_transceivers[base_if_name]
-                # PIC detail has priority for vendor info
+                # All transceiver metadata from PIC detail
                 if pic_data.get('vendor'):
                     lane['vendor'] = pic_data['vendor']
                 if pic_data.get('part_number'):
                     lane['part_number'] = pic_data['part_number']
+                if pic_data.get('serial_number'):
+                    lane['serial_number'] = pic_data['serial_number']
                 if pic_data.get('cable_type'):
                     lane['cable_type'] = pic_data['cable_type']
                 if pic_data.get('media_type'):

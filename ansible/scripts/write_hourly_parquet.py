@@ -50,7 +50,11 @@ def create_hourly_partition_path(base_dir: str, dt: datetime) -> Path:
 def extract_interface_dom_metrics(device_data: Dict, run_timestamp: int = None) -> List[Dict]:
     """
     Extract interface-level DOM metrics from optics_diagnostics data.
-    Enriches with chassis_inventory data (vendor, part_number, serial_number).
+    Enriches with chassis_inventory data (part_number, serial_number).
+    
+    Note: Vendor name comes from PIC detail (show chassis pic fpc-slot X pic-slot Y),
+    which is already merged into optics_diagnostics via merge_metadata.py.
+    Chassis inventory description is NOT a reliable source for vendor name.
     
     Schema:
         origin_hostname, origin_name, timestamp, collection_timestamp,
@@ -65,11 +69,10 @@ def extract_interface_dom_metrics(device_data: Dict, run_timestamp: int = None) 
     timestamp = run_timestamp if run_timestamp else int(datetime.utcnow().timestamp())
     collection_timestamp = datetime.utcfromtimestamp(timestamp).isoformat() + 'Z'
     
-    # Build chassis inventory lookup by interface name
+    # Build chassis inventory lookup by interface name (for part_number and serial_number only)
     chassis_inventory = {}
     for if_name, transceiver in device_data.get('chassis_inventory', {}).get('transceivers', {}).items():
         chassis_inventory[if_name] = {
-            'vendor': transceiver.get('vendor', ''),
             'part_number': transceiver.get('part_number', ''),
             'serial_number': transceiver.get('serial_number', '')
         }
@@ -84,7 +87,7 @@ def extract_interface_dom_metrics(device_data: Dict, run_timestamp: int = None) 
         # Strip channelization suffix (e.g., et-0/0/0:1 -> et-0/0/0) for chassis lookup
         parent_if_name = parse_interface_base_name(if_name)
         
-        # Use chassis inventory data if available, fallback to optics data
+        # Use chassis inventory data for part/serial numbers only
         chassis_data = chassis_inventory.get(parent_if_name, {})
         
         row = {
@@ -93,7 +96,7 @@ def extract_interface_dom_metrics(device_data: Dict, run_timestamp: int = None) 
             'timestamp': timestamp,
             'collection_timestamp': collection_timestamp,
             'device_profile': device_profile,
-            'vendor': chassis_data.get('vendor') or interface.get('vendor', ''),
+            'vendor': interface.get('vendor', ''),  # Vendor from PIC detail (via merge_metadata.py)
             'media_type': interface.get('media_type', ''),
             'fiber_type': interface.get('fiber_type', ''),
             'if_name': if_name,

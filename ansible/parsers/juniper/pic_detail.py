@@ -106,6 +106,7 @@ def parse_pic_detail(xml_content, device: str, fpc: int, pic: int,
         fiber_mode = findtext_ns(port_elem, 'fiber-mode')
         vendor_name = findtext_ns(port_elem, 'sfp-vendor-name')
         vendor_pno = findtext_ns(port_elem, 'sfp-vendor-pno')
+        vendor_sn = findtext_ns(port_elem, 'sfp-vendor-sn')
         wavelength = findtext_ns(port_elem, 'wavelength')
         vendor_fw = findtext_ns(port_elem, 'sfp-vendor-fw-ver')
         jnpr_ver = findtext_ns(port_elem, 'sfp-jnpr-ver')
@@ -118,6 +119,9 @@ def parse_pic_detail(xml_content, device: str, fpc: int, pic: int,
         
         if vendor_pno and vendor_pno.lower() not in ['n/a', 'na', 'none', '']:
             transceiver['part_number'] = vendor_pno
+        
+        if vendor_sn and vendor_sn.lower() not in ['n/a', 'na', 'none', '']:
+            transceiver['serial_number'] = vendor_sn
         
         if cable_type and cable_type.lower() not in ['n/a', 'na', 'none', '']:
             transceiver['cable_type'] = cable_type
