@@ -213,7 +213,11 @@
       environment:
         PYTHONPATH: "{{ playbook_dir }}"
       register: hourly_parquet_result
-      ignore_errors: yes
+    
+    - name: Fail if hourly Parquet write failed
+      fail:
+        msg: "Hourly Parquet file creation failed with return code {{ hourly_parquet_result.rc }}"
+      when: hourly_parquet_result.rc != 0
     
     - name: Display hourly Parquet results
       debug:
