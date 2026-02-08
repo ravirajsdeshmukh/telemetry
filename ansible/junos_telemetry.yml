@@ -105,7 +105,7 @@
       loop: "{{ parse_results.results }}"
       loop_control:
         label: "{{ item.item.item.name }}"
-      when: item.stdout_lines is defined
+      when: false  # Enable for debugging
     
     - name: Collect PIC details for detailed transceiver information
       script: >
@@ -129,7 +129,7 @@
     - name: Display PIC detail collection result
       debug:
         msg: "{{ pic_detail_result.stdout_lines }}"
-      when: pic_detail_result is defined and pic_detail_result.stdout_lines is defined
+      when: false  # Enable for debugging
     
     - name: Merge metadata into optics diagnostics
       script: >
@@ -151,7 +151,7 @@
     - name: Display merge result
       debug:
         msg: "{{ merge_result.stdout_lines }}"
-      when: merge_result is defined and merge_result.stdout_lines is defined
+      when: false  # Enable for debugging
     
     - name: Push metrics to Prometheus Pushgateway
       script: >
@@ -246,4 +246,4 @@
     - name: Display S3 sync result
       debug:
         msg: "{{ s3_sync_result }}"
-      when: s3_sync_result is defined
+      when: false  # Enable for debugging
