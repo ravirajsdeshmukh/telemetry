@@ -130,7 +130,8 @@ services:
       SEMAPHORE_RUNNER_TAGS: semaphore-runner01,shard1,regression1,xai
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       HOME: /home/semaphore
-      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
+      CLUSTER_NAME: ${CLUSTER_NAME}
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME","CLUSTER_NAME"]'
       PROMETHEUS_PUSHGATEWAY: ${PROMETHEUS_PUSHGATEWAY}
     networks:
       - monitoring
@@ -158,7 +159,8 @@ services:
       SEMAPHORE_RUNNER_TAGS: semaphore-runner02,shard2,regression2
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       HOME: /home/semaphore
-      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
+      CLUSTER_NAME: ${CLUSTER_NAME}
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME","CLUSTER_NAME"]'
       PROMETHEUS_PUSHGATEWAY: ${PROMETHEUS_PUSHGATEWAY}
     networks:
       - monitoring
@@ -186,7 +188,8 @@ services:
       SEMAPHORE_RUNNER_TAGS: semaphore-runner03,shard3,gpu-fabric
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       HOME: /home/semaphore
-      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
+      CLUSTER_NAME: ${CLUSTER_NAME}
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME","CLUSTER_NAME"]'
       PROMETHEUS_PUSHGATEWAY: ${PROMETHEUS_PUSHGATEWAY}
     networks:
       - monitoring
@@ -214,7 +217,8 @@ services:
       SEMAPHORE_RUNNER_TAGS: semaphore-runner04,shard4
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       HOME: /home/semaphore
-      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
+      CLUSTER_NAME: ${CLUSTER_NAME}
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME","CLUSTER_NAME"]'
       PROMETHEUS_PUSHGATEWAY: ${PROMETHEUS_PUSHGATEWAY}
     networks:
       - monitoring
@@ -242,7 +246,8 @@ services:
       SEMAPHORE_RUNNER_TAGS: semaphore-runner05,shard5
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       HOME: /home/semaphore
-      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
+      CLUSTER_NAME: ${CLUSTER_NAME}
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME","CLUSTER_NAME"]'
       PROMETHEUS_PUSHGATEWAY: ${PROMETHEUS_PUSHGATEWAY}
     networks:
       - monitoring

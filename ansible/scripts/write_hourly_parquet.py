@@ -250,13 +250,14 @@ def write_parquet_file(rows: List[Dict], file_path: Path, compression: str = 'sn
     print(f"Wrote {len(rows)} rows to {file_path}")
 
 
-def process_all_devices(metrics_dir: str, base_dir: str, runner_name: str, partition_dir: str = None, run_timestamp: int = None, compression: str = 'snappy'):
+def process_all_devices(metrics_dir: str, base_dir: str, cluster_name: str, runner_name: str, partition_dir: str = None, run_timestamp: int = None, compression: str = 'snappy'):
     """
     Process all device metrics and write to 3 hourly Parquet files.
     
     Args:
         metrics_dir: Directory containing *_metrics_with_metadata.json files
         base_dir: Base directory for parquet storage
+        cluster_name: Cluster identifier to include in filenames
         runner_name: Semaphore runner name to include in filenames
         partition_dir: Hourly partition directory (e.g., 'dt=2026-01-25/hr=06'), if None will use current UTC time
         run_timestamp: Unix timestamp for this playbook run, if None will use current UTC time
@@ -380,22 +381,22 @@ def process_all_devices(metrics_dir: str, base_dir: str, runner_name: str, parti
     lane_dom_dir.mkdir(exist_ok=True)
     intf_counters_dir.mkdir(exist_ok=True)
     
-    # Write 3 Parquet files to their respective directories with timestamps and runner name
+    # Write 3 Parquet files to their respective directories with cluster, runner, and timestamp
     write_parquet_file(
         all_interface_dom,
-        intf_dom_dir / f'interface_dom_{runner_name}_{timestamp_str}.parquet',
+        intf_dom_dir / f'interface_dom_{cluster_name}_{runner_name}_{timestamp_str}.parquet',
         compression
     )
     
     write_parquet_file(
         all_lane_dom,
-        lane_dom_dir / f'lane_dom_{runner_name}_{timestamp_str}.parquet',
+        lane_dom_dir / f'lane_dom_{cluster_name}_{runner_name}_{timestamp_str}.parquet',
         compression
     )
     
     write_parquet_file(
         all_interface_counters,
-        intf_counters_dir / f'interface_counters_{runner_name}_{timestamp_str}.parquet',
+        intf_counters_dir / f'interface_counters_{cluster_name}_{runner_name}_{timestamp_str}.parquet',
         compression
     )
     
@@ -413,8 +414,10 @@ def main():
                        help='Directory containing *_metrics_with_metadata.json files')
     parser.add_argument('--base-dir', required=True,
                        help='Base directory for parquet storage (e.g., output/ml_data)')
+    parser.add_argument('--cluster-name', required=True,
+                       help='Cluster identifier')
     parser.add_argument('--runner-name', required=True,
-                       help='Semaphore runner name (must be set)')
+                       help='Semaphore runner name (must be set)'))
     parser.add_argument('--partition-dir', required=False,
                        help='Hourly partition directory relative to base-dir (e.g., dt=2026-01-25/hr=06)')
     parser.add_argument('--run-timestamp', type=int, required=False,
@@ -432,6 +435,7 @@ def main():
         process_all_devices(
             args.metrics_dir, 
             args.base_dir, 
+            args.cluster_name,
             args.runner_name, 
             args.partition_dir,
             args.run_timestamp,

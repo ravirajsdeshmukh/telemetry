@@ -3,7 +3,7 @@
 # This file defines the topology of your telemetry collection infrastructure
 
 # Cluster identification - used as prefix for runner names
-cluster_name: "telemetry-prod"
+cluster_name: "default"
 
 deployment:
   # Central infrastructure VM (Semaphore UI, Prometheus, Grafana)

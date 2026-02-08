@@ -189,20 +189,31 @@
       shell: echo $SEMAPHORE_RUNNER_NAME
       register: runner_name_result
     
+    - name: Get cluster name from container environment
+      shell: echo $CLUSTER_NAME
+      register: cluster_name_result
+    
     - name: Set runner name variable
       set_fact:
         runner_name: "{{ runner_name_result.stdout }}"
+        cluster_name: "{{ cluster_name_result.stdout }}"
     
     - name: Fail if runner name is not set
       fail:
         msg: "SEMAPHORE_RUNNER_NAME environment variable must be set"
       when: runner_name == ''
     
+    - name: Fail if cluster name is not set
+      fail:
+        msg: "CLUSTER_NAME environment variable must be set"
+      when: cluster_name == ''
+    
     - name: Write aggregated hourly Parquet files (interface_dom, lane_dom, interface_counters)
       script: >
         scripts/write_hourly_parquet.py
         --metrics-dir "{{ output_dir }}"
         --base-dir "{{ raw_ml_data_dir }}"
+        --cluster-name "{{ cluster_name }}"
         --runner-name "{{ runner_name }}"
         --partition-dir "{{ hostvars['localhost']['partition_dir'] }}"
         --run-timestamp "{{ hostvars['localhost']['run_timestamp'] }}"
