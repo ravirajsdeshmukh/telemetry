@@ -9,3 +9,4 @@ xmltodict>=0.13.0
 # ML data collection dependencies
 pyarrow>=11.0.0
 pandas>=1.5.0
+numpy>=1.24.0,<2.0.0  # PyArrow 23.x requires NumPy 1.x (segfaults with 2.x)
