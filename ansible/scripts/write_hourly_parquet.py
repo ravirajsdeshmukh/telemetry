@@ -417,7 +417,7 @@ def main():
     parser.add_argument('--cluster-name', required=True,
                        help='Cluster identifier')
     parser.add_argument('--runner-name', required=True,
-                       help='Semaphore runner name (must be set)'))
+                       help='Semaphore runner name (must be set)')
     parser.add_argument('--partition-dir', required=False,
                        help='Hourly partition directory relative to base-dir (e.g., dt=2026-01-25/hr=06)')
     parser.add_argument('--run-timestamp', type=int, required=False,
