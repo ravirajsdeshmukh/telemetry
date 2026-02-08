@@ -27,13 +27,19 @@
     netconf_port: 830
     output_dir: "/tmp/semaphore/output/{{ hostvars['localhost']['inventory_group'] }}_{{ hostvars['localhost']['run_timestamp'] }}"
     raw_ml_data_dir: "/tmp/semaphore/raw_ml_data"
-    prometheus_pushgateway: "{{ lookup('env', 'PROMETHEUS_PUSHGATEWAY') | default('http://10.221.80.101:9091', true) }}"
+    prometheus_pushgateway: "{{ lookup('env', 'PROMETHEUS_PUSHGATEWAY') }}"
     rpc_config_file: "rpc_commands.yml"
     # Optional: Comma-separated list of interfaces to monitor (e.g., "et-0/0/32,et-0/0/33")
     # If not set or empty, all interfaces will be monitored
     interface_filter: ""
   
   tasks:
+    - name: Fail if Prometheus Pushgateway is not configured
+      fail:
+        msg: "PROMETHEUS_PUSHGATEWAY environment variable must be set"
+      when: prometheus_pushgateway == ''
+      run_once: true
+    
     - name: Ensure output directory exists for this run
       file:
         path: "{{ output_dir }}"
