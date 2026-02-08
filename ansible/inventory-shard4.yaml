@@ -1,0 +1,21 @@
+---
+all:
+  children:
+    longevity-testbed:
+      hosts:
+        san-q5240-01.englab.juniper.net
+        san-q5240-02.englab.juniper.net
+        san-q5240-03.englab.juniper.net
+        san-q5230-01.englab.juniper.net
+        san-q5220-01.englab.juniper.net
+        san-q5130-01.englab.juniper.net
+        san-q5700-03.englab.juniper.net
+        san-q5240-15.englab.juniper.net
+        san-q5240-q02.englab.juniper.net
+
+
+
+
+
+
+        
