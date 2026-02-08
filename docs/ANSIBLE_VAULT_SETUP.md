@@ -138,39 +138,68 @@ ansible-vault rekey group_vars/junos/vault.yml --vault-password-file vault/vault
 
 If you have devices with different credentials, create separate groups:
 
-### 1. Create new vault file
+### 1. Create plain text vault content file
 ```bash
-mkdir -p group_vars/my_new_group
+mkdir -p group_vars/longevity-testbed
 
-# Create credentials
-cat > /tmp/vault_newgroup.yml <<EOF
+# Create unencrypted credentials file
+cat > vault/content_vault_longevitytestbed.yml <<EOF
 ---
-vault_newgroup_username: admin
-vault_newgroup_password: DifferentPassword
+# Encrypted credentials for Longevity Testbed devices
+vault_longevitytestbed_username: root
+vault_longevitytestbed_password: Embe1mpls
 EOF
-
-ansible-vault encrypt /tmp/vault_newgroup.yml \
-  --vault-password-file vault/vault_password \
-  --output group_vars/my_new_group/vault.yml
-  
-rm /tmp/vault_newgroup.yml
-chmod 600 group_vars/my_new_group/vault.yml
 ```
 
-### 2. Create vars.yml for the group
+### 2. Encrypt and move to group_vars
 ```bash
-cat > group_vars/my_new_group/vars.yml <<EOF
+cd /home/ubuntu/workspace/telemetry/ansible
+
+ansible-vault encrypt vault/content_vault_longevitytestbed.yml \
+  --vault-password-file vault/vault_password \
+  --output group_vars/longevity-testbed/vault.yml
+
+chmod 600 group_vars/longevity-testbed/vault.yml
+```
+
+**Note:** The plain text file in `vault/` directory is used as a template for encryption. Keep these files for reference but ensure they're in `.gitignore`.
+
+### 3. Create vars.yml for the group
+```bash
+cat > group_vars/longevity-testbed/vars.yml <<EOF
 ---
-ansible_user: "{{ vault_newgroup_username }}"
-ansible_password: "{{ vault_newgroup_password }}"
+# Longevity Testbed group variable references
+ansible_user: "{{ vault_longevitytestbed_username }}"
+ansible_password: "{{ vault_longevitytestbed_password }}"
 ansible_network_os: junipernetworks.junos.junos
 ansible_connection: netconf
+ansible_host_key_checking: false
 ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PreferredAuthentications=password'
-ansible_port: 22
+ansible_port: 830
 EOF
 ```
 
-### 3. Update inventory
+### 4. Create inventory shard file
+```bash
+cat > inventory-shard4.yaml <<EOF
+---
+all:
+  children:
+    longevity-testbed:
+      hosts:
+        san-q5240-01.englab.juniper.net
+        san-q5240-02.englab.juniper.net
+        san-q5240-03.englab.juniper.net
+        san-q5230-01.englab.juniper.net
+        san-q5220-01.englab.juniper.net
+        san-q5130-01.englab.juniper.net
+        san-q5700-03.englab.juniper.net
+        san-q5240-15.englab.juniper.net
+        san-q5240-q02.englab.juniper.net
+EOF
+```
+
+### 5. Update inventory
 ```yaml
 all:
   children:

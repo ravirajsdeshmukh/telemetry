@@ -11,11 +11,12 @@
         run_date: "{{ lookup('pipe', 'date -u +%Y-%m-%d') }}"
         run_hour: "{{ lookup('pipe', 'date -u +%H') }}"
         partition_dir: "dt={{ lookup('pipe', 'date -u +%Y-%m-%d') }}/hr={{ lookup('pipe', 'date -u +%H') }}"
+        inventory_basename: "{{ inventory_file | basename | regex_replace('\\.ya?ml$', '') }}"
         cacheable: yes
     
     - name: Display run timestamp
       debug:
-        msg: "Playbook run partition: {{ partition_dir }}"
+        msg: "Playbook run partition: {{ partition_dir }}, Inventory: {{ inventory_basename }}"
 
 - name: Collect Junos Telemetry and Export to Prometheus
   hosts: all
@@ -24,7 +25,7 @@
   
   vars:
     netconf_port: 830
-    output_dir: "/tmp/semaphore/output"
+    output_dir: "/tmp/semaphore/output/{{ hostvars['localhost']['inventory_basename'] }}_{{ hostvars['localhost']['run_timestamp'] }}"
     raw_ml_data_dir: "/tmp/semaphore/raw_ml_data"
     prometheus_pushgateway: "{{ lookup('env', 'PROMETHEUS_PUSHGATEWAY') | default('http://10.221.80.101:9091', true) }}"
     rpc_config_file: "rpc_commands.yml"
@@ -33,17 +34,11 @@
     interface_filter: ""
   
   tasks:
-    - name: Ensure output directory exists
+    - name: Ensure output directory exists for this run
       file:
         path: "{{ output_dir }}"
         state: directory
         mode: '0777'
-      delegate_to: localhost
-      run_once: true
-      changed_when: false
-    
-    - name: Clean output directory before run
-      shell: "find {{ output_dir }} -type f -delete 2>/dev/null || true"
       delegate_to: localhost
       run_once: true
       changed_when: false
@@ -182,7 +177,7 @@
   vars:
     # output_dir: "{{ '../output' if playbook_dir != '/ansible' else '/output' }}"
     # raw_ml_data_dir: "{{ '/raw_ml_data' if playbook_dir == '/ansible' else '../raw_ml_data' }}"
-    output_dir: "/tmp/semaphore/output"
+    output_dir: "/tmp/semaphore/output/{{ hostvars['localhost']['inventory_basename'] }}_{{ hostvars['localhost']['run_timestamp'] }}"
     raw_ml_data_dir: "/tmp/semaphore/raw_ml_data"
   tasks:
     - name: Get runner name from container environment
