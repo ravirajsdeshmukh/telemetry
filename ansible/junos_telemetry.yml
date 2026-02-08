@@ -82,6 +82,7 @@
       loop: "{{ rpc_results.results }}"
       loop_control:
         label: "{{ item.item.name }}"
+      no_log: true
     
     - name: Determine interface filter for this device
       set_fact:
@@ -104,6 +105,7 @@
       loop_control:
         label: "{{ item.item.name }}"
       register: parse_results
+      no_log: true
     
     - name: Display parsing results
       debug:
