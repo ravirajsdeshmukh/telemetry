@@ -1,7 +1,7 @@
 ---
 all:
   children:
-    longevity-testbed:
+    longevitytb:
       hosts:
         san-q5240-01.englab.juniper.net:
         san-q5240-02.englab.juniper.net:
