@@ -42,3 +42,16 @@ grafana_data/
 # Credentials (if any)
 secrets.yml
 vault/**
+
+
+# Environment files with secrets
+infrastructure/env-files/.env.vm*
+
+# Mounted data directories
+infrastructure/mounts/**
+infrastructure/mounts/raw_ml_data/
+infrastructure/mounts/prometheus_data/
+infrastructure/mounts/grafana_data/
+infrastructure/mounts/postgres_data/
+# Ansible vault files containing credentials
+ansible/vault/

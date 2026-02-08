@@ -1,0 +1,66 @@
+---
+# Central deployment configuration for all VMs and runners
+# This file defines the topology of your telemetry collection infrastructure
+
+# Cluster identification - used as prefix for runner names
+cluster_name: "telemetry-prod"
+
+deployment:
+  # Central infrastructure VM (Semaphore UI, Prometheus, Grafana)
+  control_plane:
+    vm_host: "10.221.80.101"
+    services:
+      - semaphore-ui
+      - postgres
+      - prometheus
+      - grafana
+      - pushgateway
+    compose_profile: "control"
+    description: "Core orchestration and monitoring infrastructure"
+  
+  # Worker VMs with runners
+  runners:
+    - name: semaphore-runner01
+      vm_host: "10.221.80.101"
+      compose_profile: "runner01"
+      description: "Handles XAI and regression1 test devices"
+      
+    - name: semaphore-runner02
+      vm_host: "10.87.94.51"
+      compose_profile: "runner02"
+      description: "Handles regression2 test devices"
+      
+    - name: semaphore-runner03
+      vm_host: "10.87.94.51"
+      compose_profile: "runner03"
+      description: "Handles GPU fabric cluster devices"
+
+    - name: semaphore-runner04
+      vm_host: "10.87.94.51"
+      compose_profile: "runner04"
+      description: "Handles GPU fabric cluster devices"      
+
+    - name: semaphore-runner05
+      vm_host: "10.87.94.51"
+      compose_profile: "runner05"
+      description: "Handles GPU fabric cluster devices"            
+
+# VM details for SSH deployment
+vm_details:
+  - host: "10.221.80.101"
+    hostname: "vm1-control"
+    user: "ubuntu"
+    base_path: "/home/ubuntu"
+    profiles:
+      - control
+      - runner01
+    
+  - host: "10.87.94.51"
+    hostname: "vm2-workers"
+    user: "root"
+    base_path: "/root"
+    profiles:
+      - runner02
+      - runner03
+      - runner04
+      - runner05

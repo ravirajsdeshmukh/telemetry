@@ -4,6 +4,9 @@ services:
   pushgateway:
     image: prom/pushgateway:latest
     container_name: pushgateway
+    profiles:
+      - control
+      - all
     ports:
       - "9091:9091"
     restart: unless-stopped
@@ -13,11 +16,14 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
+    profiles:
+      - control
+      - all
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./mounts/prometheus_data:/prometheus
+      - ${TELEMETRY_BASE}/infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ${TELEMETRY_BASE}/infrastructure/mounts/prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -33,10 +39,13 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
+    profiles:
+      - control
+      - all
     ports:
       - "3000:3000"
     volumes:
-      - ./mounts/grafana_data:/var/lib/grafana
+      - ${TELEMETRY_BASE}/infrastructure/mounts/grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SECURITY_ADMIN_USER=admin
@@ -49,12 +58,15 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: semaphore-postgres
+    profiles:
+      - control
+      - all
     environment:
       POSTGRES_USER: semaphore
       POSTGRES_PASSWORD: semaphore
       POSTGRES_DB: semaphore
     volumes:
-      - ./mounts/postgres_data:/var/lib/postgresql/data
+      - ${TELEMETRY_BASE}/infrastructure/mounts/postgres_data:/var/lib/postgresql/data
     networks:
       - monitoring
     restart: unless-stopped
@@ -62,9 +74,13 @@ services:
   semaphore:
     image: semaphoreui/semaphore:v2.16.47
     container_name: semaphore
+    profiles:
+      - control
+      - all
     ports:
       - "3001:3000"
     environment:
+      SEMAPHORE_WEB_ROOT: ${SEMAPHORE_WEB_ROOT}
       SEMAPHORE_DB_DIALECT: postgres
       SEMAPHORE_DB_HOST: postgres
       SEMAPHORE_DB_PORT: 5432
@@ -77,14 +93,14 @@ services:
       SEMAPHORE_ADMIN: admin
       # Generate using command => head -c32 /dev/urandom | base64
       # If this access key is changed, then from semaphore UI, the secrets used in variable
-      # groups or configured in key store nee to be re-created.
+      # groups or configured in key store need to be re-created.
       SEMAPHORE_ACCESS_KEY_ENCRYPTION: bA17hoSEzRt091rK5EZPnSVs1uojBlWgP59NIx3JuDc= 
       SEMAPHORE_LDAP_ACTIVATED: 'no'
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       SEMAPHORE_USE_REMOTE_RUNNER: 'true'
-      SEMAPHORE_RUNNER_REGISTRATION_TOKEN: runnertoken12345
+      SEMAPHORE_RUNNER_REGISTRATION_TOKEN: ${RUNNER_TOKEN}
       SEMAPHORE_TMP_PATH: /tmp/semaphore
-      SEMAPHORE_RUNNER_NAME: semaphore-ui
+      SEMAPHORE_RUNNER_NAME: ${CONTROL_RUNNER_NAME}
       SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
     networks:
       - monitoring
@@ -92,10 +108,10 @@ services:
     depends_on:
       - postgres
     volumes:
-      - ./mounts/semaphore_runners:/etc/semaphore_runners
-      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
-      - ./mounts/output:/tmp/semaphore/output
-      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
+      - ${TELEMETRY_BASE}/infrastructure/mounts/semaphore_runners:/etc/semaphore_runners
+      - ${TELEMETRY_BASE}/ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
+      - ${TELEMETRY_BASE}/infrastructure/mounts/output:/tmp/semaphore/output
+      - ${TELEMETRY_BASE}/infrastructure/mounts/raw_ml_data:/tmp/semaphore/raw_ml_data  
 
   # To start all core services and runner01
   # docker compose --profile runner01 up -d
@@ -105,26 +121,25 @@ services:
     profiles:
       - runner01
       - all-runners
-    # user: "1000:1000"
+      - all
     environment:
-      SEMAPHORE_WEB_ROOT: http://10.221.80.101:3001
-      SEMAPHORE_RUNNER_TOKEN: mEuxxri3HNFgieqX3uXD5Lk2bovfHd5C9+k2MJ7uvUY=
-      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner1.key.pem
-      SEMAPHORE_RUNNER_NAME: semaphore-runner01
-      SEMAPHORE_RUNNER_TAGS: semaphore-runner01
+      SEMAPHORE_WEB_ROOT: ${RUNNER01_WEB_ROOT}
+      SEMAPHORE_RUNNER_TOKEN: ${RUNNER01_TOKEN}
+      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner01.key.pem
+      SEMAPHORE_RUNNER_NAME: ${RUNNER01_NAME}
+      SEMAPHORE_RUNNER_TAGS: semaphore-runner01,shard1,regression1,xai
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       HOME: /home/semaphore
       SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
+      PROMETHEUS_PUSHGATEWAY: ${PROMETHEUS_PUSHGATEWAY}
     networks:
       - monitoring
     restart: unless-stopped
-    depends_on:
-      - semaphore
     volumes:
-      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
-      - ./mounts/semaphore_runners:/etc/semaphore_runners
-      - ./mounts/output:/tmp/semaphore/output
-      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
+      - ${TELEMETRY_BASE}/ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
+      - ${TELEMETRY_BASE}/infrastructure/mounts/semaphore_runners:/etc/semaphore_runners
+      - ${TELEMETRY_BASE}/infrastructure/mounts/output:/tmp/semaphore/output
+      - ${TELEMETRY_BASE}/infrastructure/mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
 
   # To start all core services and runner02
   # docker compose --profile runner02 up -d
@@ -134,26 +149,109 @@ services:
     profiles:
       - runner02
       - all-runners
-    # user: "1000:1000"
+      - all
     environment:
-      SEMAPHORE_WEB_ROOT: http://10.161.38.200:3001
-      SEMAPHORE_RUNNER_TOKEN: AqmxFe6YeJHoAjtIrFXQwcw3ehYlK5Gje3fNGYANkYY=
-      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner2.key.pem
-      SEMAPHORE_RUNNER_NAME: semaphore-runner02
-      SEMAPHORE_RUNNER_TAGS: semaphore-runner02
+      SEMAPHORE_WEB_ROOT: ${RUNNER02_WEB_ROOT}
+      SEMAPHORE_RUNNER_TOKEN: ${RUNNER02_TOKEN}
+      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner02.key.pem
+      SEMAPHORE_RUNNER_NAME: ${RUNNER02_NAME}
+      SEMAPHORE_RUNNER_TAGS: semaphore-runner02,shard2,regression2
       ANSIBLE_HOST_KEY_CHECKING: 'false'
       HOME: /home/semaphore
       SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
+      PROMETHEUS_PUSHGATEWAY: ${PROMETHEUS_PUSHGATEWAY}
     networks:
       - monitoring
     restart: unless-stopped
-    depends_on:
-      - semaphore
     volumes:
-      - ../ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
-      - ./mounts/semaphore_runners:/etc/semaphore_runners
-      - ./mounts/output:/tmp/semaphore/output
-      - ./mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
+      - ${TELEMETRY_BASE}/ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
+      - ${TELEMETRY_BASE}/infrastructure/mounts/semaphore_runners:/etc/semaphore_runners
+      - ${TELEMETRY_BASE}/infrastructure/mounts/output:/tmp/semaphore/output
+      - ${TELEMETRY_BASE}/infrastructure/mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
+
+  # Runner03 for Shard 3 (GPU Fabric Cluster)
+  # docker compose --profile runner03 up -d
+  semaphore-runner03:
+    image: semaphoreui/runner:v2.16.47
+    container_name: semaphore-runner03
+    profiles:
+      - runner03
+      - all-runners
+      - all
+    environment:
+      SEMAPHORE_WEB_ROOT: ${RUNNER03_WEB_ROOT}
+      SEMAPHORE_RUNNER_TOKEN: ${RUNNER03_TOKEN}
+      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner03.key.pem
+      SEMAPHORE_RUNNER_NAME: ${RUNNER03_NAME}
+      SEMAPHORE_RUNNER_TAGS: semaphore-runner03,shard3,gpu-fabric
+      ANSIBLE_HOST_KEY_CHECKING: 'false'
+      HOME: /home/semaphore
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
+      PROMETHEUS_PUSHGATEWAY: ${PROMETHEUS_PUSHGATEWAY}
+    networks:
+      - monitoring
+    restart: unless-stopped
+    volumes:
+      - ${TELEMETRY_BASE}/ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
+      - ${TELEMETRY_BASE}/infrastructure/mounts/semaphore_runners:/etc/semaphore_runners
+      - ${TELEMETRY_BASE}/infrastructure/mounts/output:/tmp/semaphore/output
+      - ${TELEMETRY_BASE}/infrastructure/mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
+
+  # Runner04 for Shard 4
+  # docker compose --profile runner04 up -d
+  semaphore-runner04:
+    image: semaphoreui/runner:v2.16.47
+    container_name: semaphore-runner04
+    profiles:
+      - runner04
+      - all-runners
+      - all
+    environment:
+      SEMAPHORE_WEB_ROOT: ${RUNNER04_WEB_ROOT}
+      SEMAPHORE_RUNNER_TOKEN: ${RUNNER04_TOKEN}
+      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner04.key.pem
+      SEMAPHORE_RUNNER_NAME: ${RUNNER04_NAME}
+      SEMAPHORE_RUNNER_TAGS: semaphore-runner04,shard4
+      ANSIBLE_HOST_KEY_CHECKING: 'false'
+      HOME: /home/semaphore
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
+      PROMETHEUS_PUSHGATEWAY: ${PROMETHEUS_PUSHGATEWAY}
+    networks:
+      - monitoring
+    restart: unless-stopped
+    volumes:
+      - ${TELEMETRY_BASE}/ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
+      - ${TELEMETRY_BASE}/infrastructure/mounts/semaphore_runners:/etc/semaphore_runners
+      - ${TELEMETRY_BASE}/infrastructure/mounts/output:/tmp/semaphore/output
+      - ${TELEMETRY_BASE}/infrastructure/mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
+
+  # Runner05 for Shard 5
+  # docker compose --profile runner05 up -d
+  semaphore-runner05:
+    image: semaphoreui/runner:v2.16.47
+    container_name: semaphore-runner05
+    profiles:
+      - runner05
+      - all-runners
+      - all
+    environment:
+      SEMAPHORE_WEB_ROOT: ${RUNNER05_WEB_ROOT}
+      SEMAPHORE_RUNNER_TOKEN: ${RUNNER05_TOKEN}
+      SEMAPHORE_RUNNER_PRIVATE_KEY_FILE: /etc/semaphore_runners/runner05.key.pem
+      SEMAPHORE_RUNNER_NAME: ${RUNNER05_NAME}
+      SEMAPHORE_RUNNER_TAGS: semaphore-runner05,shard5
+      ANSIBLE_HOST_KEY_CHECKING: 'false'
+      HOME: /home/semaphore
+      SEMAPHORE_FORWARDED_ENV_VARS: '["SEMAPHORE_RUNNER_NAME"]'
+      PROMETHEUS_PUSHGATEWAY: ${PROMETHEUS_PUSHGATEWAY}
+    networks:
+      - monitoring
+    restart: unless-stopped
+    volumes:
+      - ${TELEMETRY_BASE}/ansible/requirements.txt:/etc/semaphore/requirements.txt:ro
+      - ${TELEMETRY_BASE}/infrastructure/mounts/semaphore_runners:/etc/semaphore_runners
+      - ${TELEMETRY_BASE}/infrastructure/mounts/output:/tmp/semaphore/output
+      - ${TELEMETRY_BASE}/infrastructure/mounts/raw_ml_data:/tmp/semaphore/raw_ml_data
 
 networks:
   monitoring:

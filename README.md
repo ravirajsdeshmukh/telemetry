@@ -196,6 +196,37 @@ rpc_commands:
     description: "Collect optical interface diagnostics"
 ```
 
+### 6. Prometheus Pushgateway Configuration
+
+The playbook uses the `PROMETHEUS_PUSHGATEWAY` environment variable to configure where metrics are pushed. This can be set in multiple ways:
+
+**Option 1: Environment Variable (Recommended for container deployments)**
+```bash
+export PROMETHEUS_PUSHGATEWAY=http://10.221.80.101:9091
+ansible-playbook junos_telemetry.yml -i inventory.yml --vault-password-file vault/vault_password
+```
+
+**Option 2: Playbook Variable Override**
+```bash
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password \
+  -e "prometheus_pushgateway=http://10.221.80.101:9091"
+```
+
+**Option 3: Modify Playbook Defaults**
+
+Edit `junos_telemetry.yml` and update the default value:
+```yaml
+vars:
+  prometheus_pushgateway: "{{ lookup('env', 'PROMETHEUS_PUSHGATEWAY') | default('http://10.221.80.101:9091', true) }}"
+```
+
+The playbook reads the environment variable using Ansible's `lookup('env')` function with a fallback default value. This design allows:
+- Container-based deployments to inject the pushgateway URL via environment
+- Flexibility to change the target without modifying code
+- Support for different pushgateway endpoints across environments
+
 ## Usage
 
 ### Basic Execution
@@ -237,9 +268,16 @@ ansible-playbook junos_telemetry.yml \
 
 ### Without Prometheus Pushgateway
 
-If you don't want to push to Prometheus:
+If you don't want to push to Prometheus, unset the environment variable or pass an empty value:
 
 ```bash
+# Unset environment variable
+unset PROMETHEUS_PUSHGATEWAY
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password
+
+# Or explicitly pass empty value
 ansible-playbook junos_telemetry.yml \
   -i inventory.yml \
   --vault-password-file vault/vault_password \
@@ -318,12 +356,23 @@ See [docs/INTERFACE_FILTERING.md](docs/INTERFACE_FILTERING.md) for detailed exam
 
 ### With Prometheus Pushgateway
 
+The playbook automatically uses the `PROMETHEUS_PUSHGATEWAY` environment variable if set:
+
 ```bash
+# Using environment variable (recommended)
+export PROMETHEUS_PUSHGATEWAY=http://your-pushgateway:9091
+ansible-playbook junos_telemetry.yml \
+  -i inventory.yml \
+  --vault-password-file vault/vault_password
+
+# Or override with -e flag
 ansible-playbook junos_telemetry.yml \
   -i inventory.yml \
   --vault-password-file vault/vault_password \
   -e "prometheus_pushgateway=http://your-pushgateway:9091"
 ```
+
+**Note**: If running in a containerized environment (e.g., Semaphore runners), ensure the `PROMETHEUS_PUSHGATEWAY` environment variable is passed to the container. The playbook will read this variable automatically.
 
 ## Data Lake and ML Training
 
