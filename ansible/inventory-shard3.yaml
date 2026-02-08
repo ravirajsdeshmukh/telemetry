@@ -1,7 +1,7 @@
 ---
 all:
   children:
-    gpu-fabric-cluster1:
+    aimlpoc:
       hosts:
         10.161.33.38:
         10.161.33.39:
