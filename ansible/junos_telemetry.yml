@@ -217,6 +217,7 @@
         --metrics-dir "{{ output_dir }}"
         --base-dir "{{ raw_ml_data_dir }}"
         --cluster-name "{{ cluster_name }}"
+        --inventory-group "{{ hostvars['localhost']['inventory_group'] }}"
         --runner-name "{{ runner_name }}"
         --partition-dir "{{ hostvars['localhost']['partition_dir'] }}"
         --run-timestamp "{{ hostvars['localhost']['run_timestamp'] }}"
