@@ -11,6 +11,12 @@ Before starting configuration, ensure:
 - ✅ All runners show "a few seconds ago" in the Activity column
 - ✅ You have admin credentials (default: `admin` / `changeme`)
 
+**Runner Registration Note:** If you need to manually register runners using `semaphore runner setup`, use the Docker service name URL:
+```
+Semaphore server URL: http://semaphore:3000
+```
+This ensures runners can communicate with the control plane via the Docker internal network.
+
 ## Overview
 
 The telemetry collection system uses a sharded architecture where each shard targets a specific subset of devices:
@@ -24,6 +30,19 @@ The telemetry collection system uses a sharded architecture where each shard tar
 | Shard 5 | TBD | inventory-shard5.yaml |
 
 **Note**: In Semaphore Community Edition, you cannot manually assign tasks to specific runners. The control plane automatically distributes tasks among available runners (runner01-05) for parallel execution.
+
+## First-Time Login Experience
+
+When you first log into Semaphore UI after deployment, you'll see a "New Project" dialog:
+
+![First-time login screen](docs/images/first_time_login.png)
+
+**Initial Setup Options:**
+- **New Project**: Click to create your first project manually (recommended for understanding the setup)
+- **Restore Project**: Import an existing project from backup
+- **Create Demo Project**: Quick setup with sample tasks (not recommended for production)
+
+For this guide, we'll create a new project from scratch. Click the "+" icon next to "New Project" or use the blue "CREATE" button.
 
 ## 1. Create Project
 
@@ -192,11 +211,59 @@ After creating all inventories, you should see 5 entries in the Inventory list:
 - ✅ Shard 4 - TBD (File: inventory-shard4.yaml)
 - ✅ Shard 5 - TBD (File: inventory-shard5.yaml)
 
-## 4. Create Task Templates
+## 4. Add Repository
+
+Before creating task templates, you need to add the repository that contains your Ansible playbooks and inventory files.
+
+### Step 4.1: Access Repositories
+
+1. From the project dashboard, click **"Repositories"** in the left sidebar
+2. Click **"New Repository"** button
+
+### Step 4.2: Configure Repository
+
+Fill in the repository details:
+
+```
+Name: ravirajsdeshmukh/telemetry
+URL or path: https://github.com/ravirajsdeshmukh/telemetry.git
+Git protocol: https
+Branch: main
+Access Key: ravirajsdeshmukh_pat
+```
+
+**Field Details:**
+- **Name**: `ravirajsdeshmukh/telemetry` (repository identifier in format owner/repo)
+- **URL or path**: Full GitHub repository URL
+- **Git protocol**: Select **"https"** (recommended for public repositories)
+  - Options: ssh, http, https, file, git, local (abs. path)
+  - Use **ssh** only if you've configured SSH keys
+  - Use **https** for PAT-based authentication or public repos
+- **Branch**: `main` (or your default branch name)
+- **Access Key**: Select `ravirajsdeshmukh_pat` (the GitHub PAT created in Step 2.4)
+
+![Create Repository Configuration](../docs/images/create-repository.png)
+
+Click **"Save"** to add the repository.
+
+**Important Notes:**
+- For **public repositories**: You can use HTTPS with a key of type "None"
+- For **private repositories**: Use HTTPS with a GitHub Personal Access Token (PAT) or SSH with an SSH key
+- The repository will be cloned to runners when tasks execute
+- Semaphore will automatically pull the latest changes before each task run
+
+### Step 4.3: Verify Repository
+
+After creating the repository, it should appear in the Repositories list:
+- ✅ ravirajsdeshmukh/telemetry (Branch: main, HTTPS)
+
+You can test the connection by clicking on the repository and checking the sync status.
+
+## 5. Create Task Templates
 
 Task templates define what command to run, which inventory to use, and which runner should execute the task.
 
-### Step 4.1: Create Empty Environment Variable Group
+### Step 5.1: Create Empty Environment Variable Group
 
 Before creating task templates, you must first create an environment variable group (even if empty, as it's a mandatory field).
 
@@ -216,12 +283,12 @@ Click **"Save"** to create the empty environment group.
 
 **Note**: While this group is empty, it's required for task template creation. You can add environment-specific variables here later if needed.
 
-### Step 4.2: Access Task Templates
+### Step 5.2: Access Task Templates
 
 1. From the project dashboard, click **"Task Templates"** in the left sidebar
 2. Click **"New Template"** button
 
-### Step 4.3: Create Template for Shard 1
+### Step 5.3: Create Template for Shard 1
 
 #### Common Options (TASK tab)
 
@@ -238,8 +305,8 @@ View: [leave default]
 - **Name**: Descriptive name for this task template
 - **Path to playbook file**: `ansible/junos_telemetry.yml` (relative path from repository root)
 - **Inventory**: Select "Shard 1 - XAI and Regression1" (created in Step 3.2)
-- **Repository**: Enter `ravirajsdeshmukh/telemetry` (your GitHub repository)
-- **Variable Group**: Select "Empty" (created in Step 4.1)
+- **Repository**: Enter `ravirajsdeshmukh/telemetry` (your GitHub repository, created in Step 4.2)
+- **Variable Group**: Select "Empty" (created in Step 5.1)
 - **View**: Leave as default
 
 #### Ansible Options
@@ -264,14 +331,9 @@ This attaches the vault configuration to decrypt Ansible vault files during play
 
 **CLI args:**
 
-Click **"+ Add arg"** and add:
-```
---vault-password-file=/tmp/vault_password
-```
-
 **Optional - For debugging/testing:**
 
-To run in verbose mode for a single device, add additional CLI args:
+To run in verbose mode for a single device, add CLI args:
 ```
 -l dcf-onyx17-jun.englab.juniper.net,localhost
 -vvv
@@ -303,7 +365,7 @@ Click **"Create"** to save.
 
 **Note**: In Semaphore Community Edition, runner selection is not available. Tasks are automatically distributed across available runners (runner01-05) by the control plane, enabling parallel execution.
 
-### Step 4.4: Create Templates for Remaining Shards
+### Step 5.4: Create Templates for Remaining Shards
 
 Repeat the same process for Shards 2-5. The key differences for each shard:
 
@@ -319,9 +381,8 @@ Repeat the same process for Shards 2-5. The key differences for each shard:
 - Repository: `ravirajsdeshmukh/telemetry`
 - Variable Group: `Empty`
 - Vaults: `vault-default`
-- CLI args: `--vault-password-file=/tmp/vault_password`
 
-### Step 4.5: Verify Task Templates
+### Step 5.5: Verify Task Templates
 
 You should now see 5 task templates:
 - ✅ Collect Telemetry - Shard 1
@@ -330,7 +391,7 @@ You should now see 5 task templates:
 - ✅ Collect Telemetry - Shard 4
 - ✅ Collect Telemetry - Shard 5
 
-### Step 4.6: Test Run (Manual)
+### Step 5.6: Test Run (Manual)
 
 Before creating schedules, test each template manually:
 
@@ -346,16 +407,16 @@ Before creating schedules, test each template manually:
 
 Repeat for all 5 shards to ensure everything works before scheduling.
 
-## 5. Create Schedules
+## 6. Create Schedules
 
 Schedules automate task execution at specified intervals using cron expressions.
 
-### Step 5.1: Access Schedules
+### Step 6.1: Access Schedules
 
 1. From the project dashboard, click **"Schedules"** in the left sidebar (or "Scheduled Tasks")
 2. Click **"New Schedule"** button
 
-### Step 5.2: Create Schedule for Shard 1
+### Step 6.2: Create Schedule for Shard 1
 
 ```
 Name: Shard 1 - Every 20 Minutes
@@ -377,7 +438,7 @@ Enabled: ✓ (checked)
 
 Click **"Create"** to save.
 
-### Step 5.3: Create Schedule for Shard 2
+### Step 6.3: Create Schedule for Shard 2
 
 ```
 Name: Shard 2 - Every 20 Minutes
@@ -386,7 +447,7 @@ Cron Format: */20 * * * *
 Enabled: ✓
 ```
 
-### Step 5.4: Create Schedule for Shard 3
+### Step 6.4: Create Schedule for Shard 3
 
 ```
 Name: Shard 3 - Every 20 Minutes
@@ -395,7 +456,7 @@ Cron Format: */20 * * * *
 Enabled: ✓
 ```
 
-### Step 5.5: Create Schedule for Shard 4
+### Step 6.5: Create Schedule for Shard 4
 
 ```
 Name: Shard 4 - Every 20 Minutes
@@ -404,7 +465,7 @@ Cron Format: */20 * * * *
 Enabled: ✓
 ```
 
-### Step 5.6: Create Schedule for Shard 5
+### Step 6.6: Create Schedule for Shard 5
 
 ```
 Name: Shard 5 - Every 20 Minutes
@@ -413,7 +474,7 @@ Cron Format: */20 * * * *
 Enabled: ✓
 ```
 
-### Step 5.7: Verify Schedules
+### Step 6.7: Verify Schedules
 
 You should see 5 active schedules:
 - ✅ Shard 1 - Every 20 Minutes (Enabled)
@@ -422,7 +483,7 @@ You should see 5 active schedules:
 - ✅ Shard 4 - Every 20 Minutes (Enabled)
 - ✅ Shard 5 - Every 20 Minutes (Enabled)
 
-### Step 5.8: Monitor Scheduled Execution
+### Step 6.8: Monitor Scheduled Execution
 
 1. Navigate to the project dashboard
 2. You'll see tasks appearing automatically every 20 minutes
@@ -489,6 +550,62 @@ find raw_ml_data/ -name "*.parquet" -type f -mmin -10
 
 ## Troubleshooting
 
+### Issue: Runner Registration Fails with "unsupported protocol scheme"
+
+**Error:**
+```
+ERRO[0038] Post "/api/internal/runners": unsupported protocol scheme ""  action="send request" context=registration error="unexpected error" type=action
+panic: runner registration failed
+```
+
+**Root Cause:**
+This error indicates the Semaphore control plane cannot register the runner and is unable to reach itself on the internal port 3000 (or exposed port 3001). This typically happens when the `SEMAPHORE_WEB_ROOT` environment variable is not properly configured.
+
+**Solution:**
+
+1. **Verify docker-compose.yml configuration:**
+   Check that the semaphore service has the `SEMAPHORE_WEB_ROOT` environment variable:
+   ```yaml
+   semaphore:
+     image: semaphoreui/semaphore:v2.16.47
+     environment:
+       SEMAPHORE_WEB_ROOT: ${SEMAPHORE_WEB_ROOT}
+       # ... other variables
+   ```
+
+2. **Verify the environment variable inside the container:**
+   ```bash
+   docker exec -it semaphore env | grep SEMAPHORE_WEB_ROOT
+   ```
+   This should output the configured URL (e.g., `http://10.221.80.101:3001`)
+
+3. **Check the .env file:**
+   Ensure your `.env` file (or `env-files/.env`) contains:
+   ```
+   SEMAPHORE_WEB_ROOT=http://10.221.80.101:3001
+   ```
+
+4. **Verify runner config files:**
+   Check that runner config files use the correct URL:
+   ```bash
+   cat /path/to/mounts/semaphore_runners/runner01-config.json
+   ```
+   The `web_host` should be either:
+   - `http://semaphore:3000` (Docker internal network - recommended, OR)
+   - `http://10.221.80.101:3001` (external access)
+
+5. **Restart services after configuration changes:**
+   ```bash
+   docker compose --profile control down
+   docker compose --profile control up -d
+   docker compose --profile all-runners restart
+   ```
+
+**Additional Notes:**
+- When running `semaphore runner setup` inside a runner container, always use `http://semaphore:3000` as the server URL
+- The port 3000 is the internal Semaphore service port within Docker
+- The port 3001 is the externally exposed port for browser access
+
 ### Issue: Task Fails with "Vault Password Required"
 
 **Error:**
@@ -498,7 +615,7 @@ ERROR! Attempting to decrypt but no vault secrets found
 
 **Solution:**
 1. Verify vault_password is configured in Key Store
-2. Check Extra CLI Arguments includes: `--vault-password-file=/tmp/vault_password`
+2. Ensure vault-default is attached to the task template (in Ansible Options → Vaults section)
 3. Ensure vault password matches the one used to encrypt vault files
 
 ### Issue: Tasks Not Running in Parallel
