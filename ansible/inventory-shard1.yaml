@@ -47,5 +47,7 @@ all:
         dcf-glen6-evo.englab.juniper.net:
         dcf-glen7-evo.englab.juniper.net:
         dcf-glen8-evo.englab.juniper.net:
+        garnet2-qfx5241-b.englab.juniper.net:
+        mx-garnet-ndut02.englab.juniper.net:
 
 
