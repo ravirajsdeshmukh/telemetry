@@ -241,10 +241,10 @@
 
     - name: Sync current hour data to S3 datalake
       community.aws.s3_sync:
-        bucket: amzn-ds-s3-rrd
+        bucket: usw2-ai-ds-dev-optical-datalake
         file_root: "{{ raw_ml_data_dir }}/{{ hostvars['localhost']['partition_dir'] }}"
         key_prefix: "datalake/{{ hostvars['localhost']['partition_dir'] }}/"
-        region: us-east-1
+        region: us-west-2
       environment:
         AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
         AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
