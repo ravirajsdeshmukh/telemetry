@@ -136,13 +136,15 @@ def extract_lane_dom_metrics(device_data: Dict, run_timestamp: int = None) -> Li
         tx_power = lane.get('tx_power')
         rx_power = lane.get('rx_power')
         
+        # Skip lanes with missing or invalid data (e.g., dark fiber, unsupported transceivers)
         if (not if_name or 
             not isinstance(lane_id, int) or 
             not isinstance(tx_bias, (int, float)) or 
             not isinstance(tx_power, (int, float)) or 
             not isinstance(rx_power, (int, float))):
-            raise ValueError("Invalid lane DOM data in optics_diagnostics - if_name: %s, lane: %s (int), tx_bias: %s (float), "
-                           "tx_power: %s (float), rx_power: %s (float)" % (if_name, lane_id, tx_bias, tx_power, rx_power))
+            print(f"Warning: Skipping invalid lane data for {inventory_instance} {if_name}:{lane_id} - "
+                  f"tx_bias={tx_bias}, tx_power={tx_power}, rx_power={rx_power}", file=sys.stderr)
+            continue
 
         row = {
             'origin_hostname': origin_hostname,
@@ -267,6 +269,7 @@ def process_all_devices(metrics_dir: str, base_dir: str, cluster_name: str, inve
     all_interface_dom = []
     all_lane_dom = []
     all_interface_counters = []
+    failed_devices = []  # Track devices that failed processing
     
     metrics_path = Path(metrics_dir)
     
@@ -356,6 +359,7 @@ def process_all_devices(metrics_dir: str, base_dir: str, cluster_name: str, inve
             
         except Exception as e:
             print(f"Error processing {device}: {e}", file=sys.stderr)
+            failed_devices.append({'device': device, 'error': str(e)})
             import traceback
             traceback.print_exc()
             continue
@@ -402,9 +406,21 @@ def process_all_devices(metrics_dir: str, base_dir: str, cluster_name: str, inve
     )
     
     print(f"\nSummary:")
+    print(f"  Total devices processed: {len(device_files)}")
+    print(f"  Successfully processed: {len(device_files) - len(failed_devices)}")
+    print(f"  Failed devices: {len(failed_devices)}")
     print(f"  Total interface DOM rows: {len(all_interface_dom)}")
     print(f"  Total lane DOM rows: {len(all_lane_dom)}")
     print(f"  Total interface counter rows: {len(all_interface_counters)}")
+    
+    # Report failed devices and return error status
+    if failed_devices:
+        print(f"\n⚠️  WARNING: {len(failed_devices)} device(s) failed processing:", file=sys.stderr)
+        for failure in failed_devices:
+            print(f"  - {failure['device']}: {failure['error']}", file=sys.stderr)
+        return 1  # Return error code
+    
+    return 0  # Success
 
 
 def main():
@@ -435,7 +451,7 @@ def main():
         raise ValueError("SEMAPHORE_RUNNER_NAME must be set and cannot be empty")
     
     try:
-        process_all_devices(
+        exit_code = process_all_devices(
             args.metrics_dir, 
             args.base_dir, 
             args.cluster_name,
@@ -445,9 +461,13 @@ def main():
             args.run_timestamp,
             args.compression
         )
-        print("\nSuccessfully wrote hourly Parquet files!")
+        if exit_code == 0:
+            print("\n✅ Successfully wrote hourly Parquet files!")
+        else:
+            print("\n⚠️  Parquet files written, but some devices failed processing.", file=sys.stderr)
+        sys.exit(exit_code)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(f"\n❌ Fatal error: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc()
         sys.exit(1)

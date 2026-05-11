@@ -229,11 +229,6 @@
         PYTHONPATH: "{{ playbook_dir }}"
       register: hourly_parquet_result
     
-    - name: Fail if hourly Parquet write failed
-      fail:
-        msg: "Hourly Parquet file creation failed with return code {{ hourly_parquet_result.rc }}"
-      when: hourly_parquet_result.rc != 0
-    
     - name: Display hourly Parquet results
       debug:
         msg: "{{ hourly_parquet_result.stdout_lines }}"
@@ -256,3 +251,8 @@
       debug:
         msg: "{{ s3_sync_result }}"
       when: false  # Enable for debugging
+
+    - name: Fail if hourly Parquet write had errors (after S3 sync completes)
+      fail:
+        msg: "Hourly Parquet file creation had errors - some devices failed processing. Check stderr output above for details."
+      when: hourly_parquet_result.rc != 0
